@@ -1,861 +1,651 @@
-"use client"
-
-import { useState, useEffect, useCallback, useRef } from "react"
-import { v4 as uuidv4 } from "uuid"
-import { useSwipeable } from "react-swipeable"
+"use client";
+import React, { useState, useEffect } from "react";
 import {
-  FaSmile,
-  FaSadTear,
-  FaAngry,
-  FaFlushed,
-  FaRegSmile,
-  FaLaugh,
-  FaMeh,
-  FaPlusCircle,
-  FaReply,
-  FaTimes,
-  FaMagic,
-  FaSun,
-  FaMoon,
-  FaHeart,
-  FaShare,
-  FaBookmark,
-  FaRegLightbulb,
-  FaRegCommentDots,
-  FaRegClock,
-} from "react-icons/fa"
+  LineChart,
+  XAxis,
+  YAxis,
+  Line,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
+import {
+  Bell,
+  Home,
+  Moon,
+  Sun,
+  Thermometer,
+  Zap,
+  ChevronUp,
+  ChevronDown,
+  Plus,
+  X,
+} from "lucide-react";
 
-type MoodType = "happy" | "sad" | "angry" | "anxious" | "relaxed" | "excited" | "grateful"
+const smartHomeDevices = [
+  {
+    id: 1,
+    name: "Living Room Thermostat",
+    type: "Thermostat",
+    icon: <Thermometer className="h-5 w-5" />,
+  },
+  {
+    id: 2,
+    name: "Kitchen Light",
+    type: "Light",
+    icon: <Zap className="h-5 w-5" />,
+  },
+  {
+    id: 3,
+    name: "Bedroom AC",
+    type: "AC",
+    icon: <Zap className="h-5 w-5" />,
+  },
+  {
+    id: 4,
+    name: "Bathroom Humidity",
+    type: "Sensor",
+    icon: <Thermometer className="h-5 w-5" />,
+  },
+  {
+    id: 5,
+    name: "Garage Door",
+    type: "Door",
+    icon: <Home className="h-5 w-5" />,
+  },
+];
 
-interface MoodPost {
-  id: string
-  username: string
-  mood: MoodType
-  message: string
-  timestamp: number
-  expiresAt: number
-  replies?: Reply[]
-  likes: number
-  isLiked?: boolean
-  isSaved?: boolean
-}
+const Card = React.memo(({ className = "", children, ...props }: React.ComponentProps<'div'>) => (
+  <div
+    className={`bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition-colors ${className}`}
+    {...props}
+  >
+    {children}
+  </div>
+));
+Card.displayName = 'Card';
 
-interface Reply {
-  id: string
-  username: string
-  message: string
-  timestamp: number
-  likes?: number
-}
+const CardHeader = React.memo(({ className = "", children, ...props }: React.ComponentProps<'div'>) => (
+  <div className={`p-4 border-b border-gray-200 dark:border-gray-700 ${className}`} {...props}>
+    {children}
+  </div>
+));
+CardHeader.displayName = 'CardHeader';
 
-const useHasMounted = () => {
-  const [hasMounted, setHasMounted] = useState(false)
+const CardContent = React.memo(({ className = "", children, ...props }: React.ComponentProps<'div'>) => (
+  <div className={`p-4 ${className}`} {...props}>
+    {children}
+  </div>
+));
+CardContent.displayName = 'CardContent';
 
-  useEffect(() => {
-    setHasMounted(true)
-  }, [])
+const CardTitle = React.memo(({ className = "", children, ...props }: React.ComponentProps<'h3'>) => (
+  <h3
+    className={`text-lg font-semibold text-gray-800 dark:text-gray-100 ${className}`}
+    {...props}
+  >
+    {children}
+  </h3>
+));
+CardTitle.displayName = 'CardTitle';
 
-  return hasMounted
-}
+const CardDescription = React.memo(({ className = "", children, ...props }: React.ComponentProps<'p'>) => (
+  <p
+    className={`text-sm text-gray-500 dark:text-gray-400 ${className}`}
+    {...props}
+  >
+    {children}
+  </p>
+));
+CardDescription.displayName = 'CardDescription';
 
-const loadingTips = [
-  "Tip: Keep your messages concise and authentic",
-  "Did you know? Sharing moods helps build empathy",
-  "Remember: All posts disappear after 24 hours",
-  "Pro tip: Swipe left on posts to dismiss them",
-  "Fun fact: Your username is randomly generated",
-  "Challenge yourself with our weekly mood activities",
-  "Need support? Check our mental health resources",
-]
-
-const moodIcons = {
-  happy: FaSmile,
-  sad: FaSadTear,
-  angry: FaAngry,
-  anxious: FaFlushed,
-  relaxed: FaRegSmile,
-  excited: FaLaugh,
-  grateful: FaMeh,
-}
-
-const moodColors = {
-  happy: "text-yellow-500",
-  sad: "text-blue-500",
-  angry: "text-red-500",
-  anxious: "text-orange-500",
-  relaxed: "text-green-500",
-  excited: "text-purple-500",
-  grateful: "text-pink-500",
-}
-
-const moodBgColors = {
-  happy: "bg-yellow-500",
-  sad: "bg-blue-500",
-  angry: "bg-red-500",
-  anxious: "bg-orange-500",
-  relaxed: "bg-green-500",
-  excited: "bg-purple-500",
-  grateful: "bg-pink-500",
-}
-
-const generateUsername = () => {
-  const adjectives = [
-    "Mystic",
-    "Serene",
-    "Vivid",
-    "Gentle",
-    "Radiant",
-    "Cosmic",
-    "Dreamy",
-    "Ethereal",
-    "Tranquil",
-    "Vibrant",
-  ]
-  const nouns = ["Whisper", "Horizon", "Moment", "Essence", "Bloom", "Nebula", "Breeze", "Ripple", "Echo", "Spark"]
-  return `${adjectives[Math.floor(Math.random() * adjectives.length)]}${
-    nouns[Math.floor(Math.random() * nouns.length)]
-  }${Math.floor(100 + Math.random() * 900)}`
-}
-
-const PostModal = ({
-  post,
-  onClose,
-  onReply,
-  replyMessage,
-  setReplyMessage,
-  isDarkMode,
-  onLike,
-  onSave,
-}: {
-  post: MoodPost
-  onClose: () => void
-  onReply: () => void
-  replyMessage: string
-  setReplyMessage: (msg: string) => void
-  isDarkMode: boolean
-  onLike: () => void
-  onSave: () => void
+const Button = React.memo(({
+  variant = "default",
+  size = "default",
+  className = "",
+  children,
+  ...props
+}: React.ComponentProps<'button'> & {
+  variant?: 'default' | 'ghost' | 'outline';
+  size?: 'default' | 'sm' | 'lg' | 'icon';
 }) => {
-  const Icon = moodIcons[post.mood]
-  const colorClass = moodColors[post.mood]
-  const bgColorClass = moodBgColors[post.mood]
-  const modalRef = useRef<HTMLDivElement>(null)
+  const variantClasses = {
+    default: "bg-blue-500 text-white hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700",
+    ghost: "bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200",
+    outline: "border border-gray-300 dark:border-gray-600 bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200",
+  };
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
-        onClose()
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
-    }
-  }, [onClose])
+  const sizeClasses = {
+    default: "px-4 py-2 text-sm",
+    sm: "px-2 py-1 text-xs",
+    lg: "px-6 py-3 text-base",
+    icon: "p-2",
+  };
 
   return (
-    <div
-      className={`fixed inset-0 ${
-        isDarkMode ? "bg-black/70" : "bg-black/30"
-      } backdrop-blur-lg flex items-center justify-center p-4 animate-fadeIn z-50`}
+    <button
+      className={`${sizeClasses[size]} ${variantClasses[variant]} rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 ${className}`}
+      {...props}
     >
-      <div
-        ref={modalRef}
-        className={`${
-          isDarkMode ? "bg-gray-800/90 text-white border-gray-700" : "bg-white/90 text-gray-800 border-gray-200"
-        } rounded-2xl backdrop-blur-lg border w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-xl`}
-      >
-        <div className="p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className={`${isDarkMode ? "text-white" : "text-gray-800"} text-2xl font-bold`}>Post Conversation</h2>
-            <button
-              onClick={onClose}
-              className={`p-2 rounded-full ${isDarkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"} transition-colors`}
-            >
-              <FaTimes className="text-xl" />
-            </button>
-          </div>
+      {children}
+    </button>
+  );
+});
+Button.displayName = 'Button';
 
-          <div className="mb-8">
-            <div className="flex items-center gap-4 mb-4">
-              <div
-                className={`p-3 rounded-xl ${bgColorClass} bg-opacity-20 border border-opacity-30 ${bgColorClass.replace(
-                  "bg-",
-                  "border-",
-                )}`}
-              >
-                <Icon className={`text-2xl ${colorClass}`} />
-              </div>
-              <div>
-                <h3 className={`${isDarkMode ? "text-white" : "text-gray-800"} text-lg font-semibold`}>
-                  {post.username}
-                </h3>
-                <p className="text-sm text-gray-500 font-medium">
-                  {new Date(post.timestamp).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </p>
-              </div>
-            </div>
-            <p className={`${isDarkMode ? "text-white" : "text-gray-700"} text-base leading-relaxed`}>{post.message}</p>
+const Input = React.memo(({ className = "", ...props }: React.ComponentProps<'input'>) => (
+  <input
+    className={`w-full px-3 py-2 text-sm text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 ${className}`}
+    {...props}
+  />
+));
+Input.displayName = 'Input';
 
-            <div className="flex items-center gap-4 mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
-              <button
-                onClick={onLike}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full ${
-                  post.isLiked
-                    ? "bg-red-100 dark:bg-red-900/30 text-red-500"
-                    : "hover:bg-gray-100 dark:hover:bg-gray-700"
-                } transition-colors`}
-              >
-                <FaHeart className={post.isLiked ? "text-red-500" : "text-gray-400"} />
-                <span>{post.likes}</span>
-              </button>
-              <button
-                onClick={onSave}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full ${
-                  post.isSaved
-                    ? "bg-blue-100 dark:bg-blue-900/30 text-blue-500"
-                    : "hover:bg-gray-100 dark:hover:bg-gray-700"
-                } transition-colors`}
-              >
-                <FaBookmark className={post.isSaved ? "text-blue-500" : "text-gray-400"} />
-              </button>
-              <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ml-auto">
-                <FaShare className="text-gray-400" />
-              </button>
-            </div>
-          </div>
+const Badge = React.memo(({ className = "", children, ...props }: React.ComponentProps<'span'>) => (
+  <span
+    className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 ${className}`}
+    {...props}
+  >
+    {children}
+  </span>
+));
+Badge.displayName = 'Badge';
 
-          <div className="space-y-6">
-            <div className="space-y-4">
-              <textarea
-                value={replyMessage}
-                onChange={(e) => setReplyMessage(e.target.value)}
-                placeholder="Write your response..."
-                className={`${
-                  isDarkMode
-                    ? "bg-gray-700 border-gray-600 placeholder:text-gray-400"
-                    : "bg-white border-gray-200 placeholder:text-gray-500"
-                } w-full p-4 rounded-xl border focus:border-purple-300 focus:ring-2 focus:ring-purple-200 outline-none transition-all resize-none`}
-                rows={3}
-              />
-              <button
-                onClick={onReply}
-                disabled={!replyMessage.trim()}
-                className="w-full py-3.5 bg-purple-500 hover:bg-purple-600 text-white font-semibold rounded-xl transition-all transform hover:scale-[1.01] disabled:opacity-50 disabled:hover:scale-100"
-              >
-                Post Response
-              </button>
-            </div>
+const Switch = React.memo(({ className = "", checked, onChange, ...props }: React.ComponentProps<'button'> & {
+  checked?: boolean;
+  onChange?: (checked: boolean) => void;
+}) => (
+  <button
+    role="switch"
+    aria-checked={checked}
+    onClick={() => onChange?.(!checked)}
+    className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center justify-center rounded-full cursor-pointer transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 ${checked
+      ? "bg-blue-500 dark:bg-blue-600"
+      : "bg-gray-200 dark:bg-gray-700"
+      } ${className}`}
+    {...props}
+  >
+    <span
+      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${checked ? "translate-x-5" : "translate-x-0"
+        }`}
+    />
+  </button>
+));
+Switch.displayName = 'Switch';
 
-            <div className="space-y-6">
-              <h3 className={`${isDarkMode ? "text-white" : "text-gray-800"} font-semibold`}>
-                {post.replies && post.replies.length > 0 ? `Responses (${post.replies.length})` : "No responses yet"}
-              </h3>
+const ScrollArea = React.memo(({ className = "", children, ...props }: React.ComponentProps<'div'>) => (
+  <div className={`overflow-auto ${className}`} {...props}>
+    {children}
+  </div>
+));
+ScrollArea.displayName = 'ScrollArea';
 
-              {post.replies?.map((reply) => (
-                <div key={reply.id} className={`pt-4 border-t ${isDarkMode ? "border-gray-700" : "border-gray-200"}`}>
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className={`${isDarkMode ? "text-white" : "text-gray-700"} text-sm font-semibold`}>
-                      {reply.username}
-                    </span>
-                    <span className={`${isDarkMode ? "text-gray-400" : "text-gray-500"} text-xs font-medium`}>
-                      {new Date(reply.timestamp).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </span>
-                  </div>
-                  <p className={`${isDarkMode ? "text-gray-300" : "text-gray-600"} text-sm leading-relaxed`}>
-                    {reply.message}
-                  </p>
+const HomeAssistant = () => {
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [livingRoomTemp, setLivingRoomTemp] = useState(72);
+  const [bedroomTemp, setBedroomTemp] = useState(68);
+  const [kitchenLightOn, setKitchenLightOn] = useState(true);
+  const [bedroomACOn, setBedroomACOn] = useState(false);
+  const [devices, setDevices] = useState(smartHomeDevices);
+  const [energyUsage, setEnergyUsage] = useState([
+    { name: "Mon", value: 12 },
+    { name: "Tue", value: 15 },
+    { name: "Wed", value: 18 },
+    { name: "Thu", value: 13 },
+    { name: "Fri", value: 16 },
+    { name: "Sat", value: 20 },
+    { name: "Sun", value: 14 },
+  ]);
+  const [showDeviceModal, setShowDeviceModal] = useState(false);
+  const [newDeviceName, setNewDeviceName] = useState("");
+  const [newDeviceType, setNewDeviceType] = useState("Light");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showNotification, setShowNotification] = useState(false);
+  const [notificationMessage, setNotificationMessage] = useState("");
+  const [showAllDevices, setShowAllDevices] = useState(false);
+  const [tempValue, setTempValue] = useState(0);
 
-                  <div className="flex items-center gap-2 mt-2">
-                    <button className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
-                      <FaHeart className="text-xs" />
-                      <span>{reply.likes || 0}</span>
-                    </button>
-                    <button className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
-                      <FaReply className="text-xs" />
-                      <span>Reply</span>
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
+  const toggleDarkMode = () => {
+    setIsDarkMode(!isDarkMode);
+  };
 
-export default function Page() {
-  const hasMounted = useHasMounted()
-  const [posts, setPosts] = useState<MoodPost[]>([])
-  const [newPostMessage, setNewPostMessage] = useState("")
-  const [selectedMood, setSelectedMood] = useState<MoodType | null>(null)
-  const [replyMessage, setReplyMessage] = useState("")
-  const [selectedPost, setSelectedPost] = useState<MoodPost | null>(null)
-  const [deletingId, setDeletingId] = useState<string | null>(null)
-  const [isSwiping, setIsSwiping] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
-  const [isDarkMode, setIsDarkMode] = useState(false)
-  const [currentTip, setCurrentTip] = useState(0)
-  const [currentMood, setCurrentMood] = useState(0)
-  const [showCreateForm, setShowCreateForm] = useState(false)
+  const toggleKitchenLight = () => {
+    setKitchenLightOn(!kitchenLightOn);
+  };
+
+  const toggleBedroomAC = () => {
+    setBedroomACOn(!bedroomACOn);
+  };
+
+  const adjustTemp = (room: "living" | "bedroom", direction: "up" | "down") => {
+    if (room === "living") {
+      setLivingRoomTemp(livingRoomTemp + (direction === "up" ? 1 : -1));
+    } else {
+      setBedroomTemp(bedroomTemp + (direction === "up" ? 1 : -1));
+    }
+  };
+
+  const handleAddDevice = () => {
+    if (newDeviceName.trim() !== "") {
+      const newDevice = {
+        id: devices.length + 1,
+        name: newDeviceName,
+        type: newDeviceType,
+        icon: getDeviceIcon(newDeviceType),
+      };
+      setDevices([...devices, newDevice]);
+      setNewDeviceName("");
+      setNewDeviceType("Light");
+      setShowDeviceModal(false);
+      showToast(`Added new device: ${newDeviceName}`);
+    }
+  };
+
+  const handleCancelAddDevice = () => {
+    setNewDeviceName("");
+    setNewDeviceType("Light");
+    setShowDeviceModal(false);
+  };
+
+  const getDeviceIcon = (type: string) => {
+    switch (type) {
+      case "Thermostat":
+        return <Thermometer className="h-5 w-5" />;
+      case "AC":
+        return <Zap className="h-5 w-5" />;
+      case "Sensor":
+        return <Thermometer className="h-5 w-5" />;
+      case "Door":
+        return <Home className="h-5 w-5" />;
+      default:
+        return <Zap className="h-5 w-5" />;
+    }
+  };
+
+  const filteredDevices = devices.filter((device) =>
+    device.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const displayedDevices = showAllDevices ? filteredDevices : filteredDevices.slice(0, 3);
+
+  const showToast = (message: string) => {
+    setNotificationMessage(message);
+    setShowNotification(true);
+    setTimeout(() => setShowNotification(false), 3000);
+  };
 
   useEffect(() => {
-    const initializeClientData = () => {
-      const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
-      const savedTheme = localStorage.getItem("moodSphereTheme")
-      if (savedTheme) {
-        setIsDarkMode(savedTheme === "dark")
-      } else if (prefersDark) {
-        setIsDarkMode(true)
-      }
+    document.documentElement.classList.toggle("dark", isDarkMode);
+  }, [isDarkMode]);
 
-      const tipInterval = setInterval(() => {
-        setCurrentTip((prev) => (prev + 1) % loadingTips.length)
-      }, 4000)
-
-      const moodInterval = setInterval(() => {
-        setCurrentMood((prev) => (prev + 1) % Object.keys(moodIcons).length)
-      }, 1000)
-
-      setTimeout(() => {
-        setIsLoading(false)
-        clearInterval(tipInterval)
-        clearInterval(moodInterval)
-      }, 2500)
-
-      return () => {
-        clearInterval(tipInterval)
-        clearInterval(moodInterval)
-      }
-    }
-
-    initializeClientData()
-  }, [])
-
-  useEffect(() => {
-    if (posts.length > 0) {
-      try {
-        localStorage.setItem("moodPosts", JSON.stringify(posts))
-      } catch (error) {
-        console.error("Error saving posts to localStorage:", error)
-      }
-    }
-  }, [posts])
-
-  useEffect(() => {
-    try {
-      localStorage.setItem("moodSphereTheme", isDarkMode ? "dark" : "light")
-    } catch (error) {
-      console.error("Error saving theme preference:", error)
-    }
-  }, [isDarkMode])
-
-  const handlers = useSwipeable({
-    onSwiping: (e) => {
-      setIsSwiping(true)
-      const postElement = e.event.target?.closest(".post-item") as HTMLElement | null
-      if (postElement) {
-        const postWidth = postElement.offsetWidth
-        const delta = Math.min(e.deltaX, 0)
-        const translateX = Math.max(delta, -postWidth * 0.33)
-        postElement.style.transform = `translateX(${translateX}px)`
-
-        const opacity = 1 - Math.min(Math.abs(translateX) / (postWidth * 0.33), 0.5)
-        postElement.style.opacity = opacity.toString()
-      }
-    },
-    onSwiped: (e) => {
-      setIsSwiping(false)
-      const postElement = e.event.target?.closest(".post-item") as HTMLElement | null
-      if (postElement) {
-        const postWidth = postElement.offsetWidth
-        if (Math.abs(e.deltaX) > postWidth * 0.33) {
-          setDeletingId(postElement.id)
-          setTimeout(() => {
-            setPosts((prev) => prev.filter((post) => post.id !== postElement.id))
-            setDeletingId(null)
-          }, 300)
-        } else {
-          postElement.style.transform = ""
-          postElement.style.opacity = "1"
-        }
-      }
-    },
-    trackMouse: true,
-    delta: 5,
-  })
-
-  const handleCreatePost = useCallback(() => {
-    if (!selectedMood || !newPostMessage.trim()) return
-
-    const newPost: MoodPost = {
-      id: uuidv4(),
-      username: generateUsername(),
-      mood: selectedMood,
-      message: newPostMessage.trim(),
-      timestamp: Date.now(),
-      expiresAt: Date.now() + 86400000,
-      replies: [],
-      likes: 0,
-    }
-
-    setPosts((prev) => [newPost, ...prev])
-    setNewPostMessage("")
-    setSelectedMood(null)
-    setShowCreateForm(false)
-  }, [selectedMood, newPostMessage])
-
-  const handleReply = useCallback(() => {
-    if (!selectedPost || !replyMessage.trim()) return
-
-    setPosts((prev) =>
-      prev.map((post) =>
-        post.id === selectedPost.id
-          ? {
-              ...post,
-              replies: [
-                ...(post.replies || []),
-                {
-                  id: uuidv4(),
-                  username: generateUsername(),
-                  message: replyMessage.trim(),
-                  timestamp: Date.now(),
-                  likes: 0,
-                },
-              ],
-            }
-          : post,
-      ),
-    )
-    setReplyMessage("")
-    setSelectedPost(null)
-  }, [replyMessage, selectedPost])
-
-  const handleLikePost = useCallback(() => {
-    if (!selectedPost) return
-
-    setPosts((prev) =>
-      prev.map((post) =>
-        post.id === selectedPost.id
-          ? {
-              ...post,
-              likes: post.isLiked ? post.likes - 1 : post.likes + 1,
-              isLiked: !post.isLiked,
-            }
-          : post,
-      ),
-    )
-
-    setSelectedPost((prev) =>
-      prev
-        ? {
-            ...prev,
-            likes: prev.isLiked ? prev.likes - 1 : prev.likes + 1,
-            isLiked: !prev.isLiked,
-          }
-        : null,
-    )
-  }, [selectedPost])
-
-  const handleSavePost = useCallback(() => {
-    if (!selectedPost) return
-
-    setPosts((prev) =>
-      prev.map((post) =>
-        post.id === selectedPost.id
-          ? {
-              ...post,
-              isSaved: !post.isSaved,
-            }
-          : post,
-      ),
-    )
-
-    setSelectedPost((prev) =>
-      prev
-        ? {
-            ...prev,
-            isSaved: !prev.isSaved,
-          }
-        : null,
-    )
-  }, [selectedPost])
-
-  if (!hasMounted) {
-    return null
-  }
+  const containerClass = `min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300 font-sans`;
 
   return (
-    <div
-      className={`min-h-screen transition-colors duration-300 ${
-        isDarkMode ? "bg-gray-900 text-white" : "bg-gradient-to-br from-purple-50 to-blue-50 text-gray-900"
-      }`}
-    >
-      {/* Loading Screen */}
-      {isLoading && (
-        <div className="fixed inset-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm z-50 flex items-center justify-center animate-fadeOut">
-          <div className="flex flex-col items-center gap-6 text-center">
-            <div className="relative w-24 h-24">
-              {Object.values(moodIcons).map((Icon, index) => (
-                <div
-                  key={index}
-                  className={`absolute inset-0 m-auto text-3xl transition-opacity duration-500 ${
-                    index === currentMood ? "opacity-100" : "opacity-0"
-                  } ${Object.values(moodColors)[index]}`}
-                >
-                  <Icon />
-                </div>
-              ))}
-            </div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
-              MoodSphere
-            </h1>
-            <p className={`text-lg ${isDarkMode ? "text-gray-300" : "text-gray-600"} font-medium max-w-xs px-4`}>
-              {loadingTips[currentTip]}
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Header */}
-      <header
-        className={`p-4 backdrop-blur-lg border-b transition-colors duration-300 ${
-          isDarkMode ? "bg-gray-900/95 border-gray-800 text-white" : "bg-white/95 border-gray-200"
-        } sticky top-0 z-30`}
-      >
-        <div className="max-w-4xl mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <div className="bg-gradient-to-r from-purple-500 to-pink-500 w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold">
-              M
-            </div>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
-              MoodSphere
-            </h1>
-          </div>
-
+    <div className={containerClass}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
+        <header className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
+            Smart Home Dashboard
+          </h1>
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => setIsDarkMode(!isDarkMode)}
-              className={`p-2 rounded-lg ${isDarkMode ? "hover:bg-gray-800" : "hover:bg-gray-100"} transition-all`}
-              aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => showToast("Notifications will be implemented soon!")}
+              className="text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400"
             >
-              {isDarkMode ? <FaSun className="text-xl text-amber-400" /> : <FaMoon className="text-xl text-gray-600" />}
-            </button>
-
-            <button
-              onClick={() => setShowCreateForm(true)}
-              className={`p-2.5 rounded-xl ${
-                isDarkMode
-                  ? "bg-gray-800 hover:bg-gray-700 border-gray-700"
-                  : "bg-gray-100 hover:bg-gray-200 border-gray-200"
-              } border transition-all`}
-              aria-label="Create new post"
+              <Bell className="h-5 w-5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleDarkMode}
+              className="text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400"
             >
-              <FaPlusCircle className={`${isDarkMode ? "text-white" : "text-gray-700"} text-xl`} />
-            </button>
+              {isDarkMode ? (
+                <Sun className="h-5 w-5" />
+              ) : (
+                <Moon className="h-5 w-5" />
+              )}
+            </Button>
           </div>
-        </div>
-      </header>
+        </header>
 
-      {/* Main Content */}
-      <main className="max-w-4xl mx-auto p-4 pb-20">
-        {/* Create Post View */}
-        {showCreateForm && (
-          <div
-            className={`${
-              isDarkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
-            } backdrop-blur-lg rounded-2xl border p-6 animate-fadeIn shadow-lg mb-6`}
-          >
-            <div className="mb-8">
-              <h2 className={`${isDarkMode ? "text-white" : "text-gray-800"} text-xl font-bold mb-6`}>
-                Share Your Mood
-              </h2>
-              <div className="grid grid-cols-4 sm:grid-cols-7 gap-3">
-                {Object.entries(moodIcons).map(([mood, Icon]) => (
-                  <button
-                    key={mood}
-                    onClick={() => setSelectedMood(mood as MoodType)}
-                    className={`p-3 rounded-xl flex flex-col items-center transition-all ${
-                      selectedMood === mood
-                        ? `${moodBgColors[mood as MoodType]} text-white shadow-lg`
-                        : `${isDarkMode ? "bg-gray-700 hover:bg-gray-600" : "bg-gray-100 hover:bg-gray-200"} ${
-                            moodColors[mood as MoodType]
-                          }`
-                    }`}
-                  >
-                    <Icon className="text-2xl mb-1.5" />
-                    <span className="text-xs font-semibold capitalize">{mood}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              <textarea
-                value={newPostMessage}
-                onChange={(e) => setNewPostMessage(e.target.value)}
-                placeholder="What's on your mind today?"
-                className={`${
-                  isDarkMode
-                    ? "bg-gray-700 border-gray-600 placeholder:text-gray-400"
-                    : "bg-white border-gray-200 placeholder:text-gray-500"
-                } w-full p-4 rounded-xl border focus:border-purple-300 focus:ring-2 focus:ring-purple-200 outline-none transition-all resize-none`}
-                rows={4}
-              />
-
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setShowCreateForm(false)}
-                  className={`px-5 py-3.5 ${
-                    isDarkMode
-                      ? "bg-gray-700 hover:bg-gray-600 text-white"
-                      : "bg-gray-200 hover:bg-gray-300 text-gray-800"
-                  } font-semibold rounded-xl transition-all flex-1`}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleCreatePost}
-                  disabled={!selectedMood || !newPostMessage.trim() || newPostMessage.length > 300}
-                  className="px-5 py-3.5 bg-purple-500 hover:bg-purple-600 text-white font-semibold rounded-xl transition-all transform hover:scale-[1.01] disabled:opacity-50 disabled:hover:scale-100 flex-1"
-                >
-                  Share Mood
-                </button>
-              </div>
-            </div>
+        {showNotification && (
+          <div className="fixed bottom-4 right-4 bg-gray-800 dark:bg-gray-700 text-white px-4 py-3 rounded-md shadow-lg transition-all transform translate-y-0 opacity-100 z-50">
+            <p className="text-sm font-medium">{notificationMessage}</p>
           </div>
         )}
 
-        {/* Feed View */}
-        <div className="space-y-4" {...handlers}>
-          {posts.length === 0 ? (
-            <div
-              className={`p-8 text-center rounded-2xl ${
-                isDarkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
-              } backdrop-blur-lg border animate-fadeIn shadow-lg`}
-            >
-              <FaMagic className="text-4xl mb-3 mx-auto text-purple-500" />
-              <p className={`${isDarkMode ? "text-white" : "text-gray-600"} text-lg font-medium`}>
-                Be the first to share your mood!
-              </p>
-              <button
-                onClick={() => setShowCreateForm(true)}
-                className="mt-4 px-6 py-2.5 bg-purple-500 hover:bg-purple-600 text-white font-semibold rounded-xl transition-all"
-              >
-                Create Post
-              </button>
-            </div>
-          ) : (
-            posts.map((post) => {
-              const Icon = moodIcons[post.mood]
-              const colorClass = moodColors[post.mood]
-              const bgColorClass = moodBgColors[post.mood]
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Device Overview</CardTitle>
+              <CardDescription>
+                Manage your smart home devices
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-full text-blue-500 dark:text-blue-400">
+                      <Home className="h-4 w-4" />
+                    </div>
+                    <span className="font-medium text-gray-800 dark:text-gray-100">
+                      Total Devices:
+                    </span>
+                  </div>
+                  <Badge className="bg-blue-500 dark:bg-blue-600 text-white">
+                    {devices.length}
+                  </Badge>
+                </div>
 
-              return (
-                <div
-                  key={post.id}
-                  id={post.id}
-                  className={`post-item relative ${
-                    isDarkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
-                  } backdrop-blur-lg rounded-2xl border overflow-hidden transition-transform ${
-                    deletingId === post.id ? "animate-slideOut" : ""
-                  } shadow-md`}
-                  onClick={() => !isSwiping && setSelectedPost(post)}
-                >
-                  <div className="p-5 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
-                    <div className="flex items-center gap-4 mb-4">
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                      Living Room
+                    </h3>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => adjustTemp("living", "up")}
+                        className="h-8 w-8 p-0 rounded-full flex items-center justify-center border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                      >
+                        <ChevronUp className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => adjustTemp("living", "down")}
+                        className="h-8 w-8 p-0 rounded-full flex items-center justify-center border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                      >
+                        <ChevronDown className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="text-2xl font-bold text-blue-500 dark:text-blue-400">
+                    {livingRoomTemp}°F
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                      Bedroom
+                    </h3>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => adjustTemp("bedroom", "up")}
+                        className="h-8 w-8 p-0 rounded-full flex items-center justify-center border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                      >
+                        <ChevronUp className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => adjustTemp("bedroom", "down")}
+                        className="h-8 w-8 p-0 rounded-full flex items-center justify-center border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                      >
+                        <ChevronDown className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="text-2xl font-bold text-blue-500 dark:text-blue-400">
+                    {bedroomTemp}°F
+                  </div>
+                </div>
+
+                <div className="pt-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="p-2 bg-yellow-100 dark:bg-yellow-900 rounded-full text-yellow-500 dark:text-yellow-400">
+                        <Zap className="h-4 w-4" />
+                      </div>
+                      <span className="text-sm text-gray-700 dark:text-gray-200">
+                        Kitchen Light
+                      </span>
+                    </div>
+                    <Switch checked={kitchenLightOn} onChange={toggleKitchenLight} />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="p-2 bg-indigo-100 dark:bg-indigo-900 rounded-full text-indigo-500 dark:text-indigo-400">
+                        <Zap className="h-4 w-4" />
+                      </div>
+                      <span className="text-sm text-gray-700 dark:text-gray-200">
+                        Bedroom AC
+                      </span>
+                    </div>
+                    <Switch checked={bedroomACOn} onChange={toggleBedroomAC} />
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Energy Usage
+              </CardTitle>
+              <Zap className="h-4 w-4 text-blue-500 dark:text-blue-400" />
+            </CardHeader>
+            <CardContent>
+              <div className="h-[250px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart
+                    data={energyUsage}
+                    margin={{ top: 5, right: 5, left: 0, bottom: 5 }}
+                  >
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      stroke="#e5e7eb"
+                      vertical={false}
+                    />
+                    <XAxis
+                      dataKey="name"
+                      stroke="#6b7280"
+                      fontSize={11}
+                      tickLine={false}
+                      axisLine={false}
+                    />
+                    <YAxis
+                      stroke="#6b7280"
+                      fontSize={11}
+                      tickLine={false}
+                      axisLine={false}
+                      tickFormatter={(value) => `${value}kW`}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "#1f2937",
+                        border: "none",
+                        borderRadius: "0.5rem",
+                        color: "#f9fafb",
+                      }}
+                      itemStyle={{ color: "#f9fafb" }}
+                      labelStyle={{ color: "#d1d5db" }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="value"
+                      stroke="#3b82f6"
+                      strokeWidth={2}
+                      dot={{
+                        r: 4,
+                        strokeWidth: 0,
+                        fill: "#3b82f6",
+                      }}
+                      activeDot={{
+                        r: 6,
+                        strokeWidth: 0,
+                        fill: "#3b82f6",
+                      }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500 dark:bg-blue-600 opacity-10 rounded-full -mr-16 -mt-16"></div>
+            <div className="absolute bottom-0 left-0 w-40 h-40 bg-indigo-500 dark:bg-indigo-600 opacity-10 rounded-full -ml-20 -mb-20"></div>
+
+            <CardHeader className="relative z-10">
+              <CardTitle>Device Management</CardTitle>
+              <CardDescription>Add or modify your devices</CardDescription>
+            </CardHeader>
+            <CardContent className="relative z-10">
+              <div className="mb-4">
+                <Input
+                  type="text"
+                  placeholder="Search devices..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full"
+                />
+              </div>
+
+              <ScrollArea className="h-[250px]">
+                <div className="space-y-3 pr-4">
+                  {displayedDevices.length > 0 ? (
+                    displayedDevices.map((device) => (
                       <div
-                        className={`p-2.5 rounded-xl ${bgColorClass} bg-opacity-20 border border-opacity-30 ${bgColorClass.replace(
-                          "bg-",
-                          "border-",
-                        )}`}
+                        key={device.id}
+                        className="flex items-center justify-between p-2 rounded-md bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                       >
-                        <Icon className={`text-xl ${colorClass}`} />
-                      </div>
-                      <div>
-                        <h3 className={`${isDarkMode ? "text-white" : "text-gray-800"} text-base font-semibold`}>
-                          {post.username}
-                        </h3>
-                        <p className="text-xs text-gray-500 font-medium">
-                          {new Date(post.timestamp).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </p>
-                      </div>
-                    </div>
-
-                    <p className={`${isDarkMode ? "text-gray-200" : "text-gray-700"} text-base mb-4 pl-2`}>
-                      {post.message}
-                    </p>
-
-                    <div className="flex items-center gap-4 mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setPosts((prev) =>
-                            prev.map((p) =>
-                              p.id === post.id
-                                ? { ...p, likes: p.isLiked ? p.likes - 1 : p.likes + 1, isLiked: !p.isLiked }
-                                : p,
-                            ),
-                          )
-                        }}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full ${
-                          post.isLiked
-                            ? "bg-red-100 dark:bg-red-900/30 text-red-500"
-                            : "hover:bg-gray-100 dark:hover:bg-gray-700"
-                        } transition-colors`}
-                      >
-                        <FaHeart className={post.isLiked ? "text-red-500" : "text-gray-400"} />
-                        <span>{post.likes}</span>
-                      </button>
-
-                      <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                        <FaReply className="text-gray-400" />
-                        <span>{post.replies?.length || 0}</span>
-                      </button>
-
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setPosts((prev) => prev.map((p) => (p.id === post.id ? { ...p, isSaved: !p.isSaved } : p)))
-                        }}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full ${
-                          post.isSaved
-                            ? "bg-blue-100 dark:bg-blue-900/30 text-blue-500"
-                            : "hover:bg-gray-100 dark:hover:bg-gray-700"
-                        } transition-colors ml-auto`}
-                      >
-                        <FaBookmark className={post.isSaved ? "text-blue-500" : "text-gray-400"} />
-                      </button>
-
-                      <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                        <FaShare className="text-gray-400" />
-                      </button>
-                    </div>
-
-                    {post.replies && post.replies.length > 0 && (
-                      <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
-                        {post.replies.slice(0, 1).map((reply) => (
-                          <div key={reply.id} className="ml-4 pl-3 border-l-2 border-purple-200/60 mb-3">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className={`text-sm font-bold ${isDarkMode ? "text-white" : "text-gray-600"}`}>
-                                {reply.username}
-                              </span>
-                              <span className="text-xs text-gray-400">
-                                {new Date(reply.timestamp).toLocaleTimeString([], {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })}
-                              </span>
-                            </div>
-                            <p className={`text-sm font-medium ${isDarkMode ? "text-gray-300" : "text-gray-500"}`}>
-                              {reply.message}
+                        <div className="flex items-center gap-2">
+                          <div className="p-1.5 bg-blue-100 dark:bg-blue-900 rounded-full text-blue-500 dark:text-blue-400">
+                            {device.icon}
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-gray-800 dark:text-gray-100">
+                              {device.name}
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              {device.type}
                             </p>
                           </div>
-                        ))}
-
-                        {post.replies.length > 1 && (
-                          <div className="mt-2 text-purple-500 text-sm font-medium">
-                            + {post.replies.length - 1} more {post.replies.length === 2 ? "reply" : "replies"}
-                          </div>
-                        )}
+                        </div>
                       </div>
-                    )}
-                  </div>
+                    ))
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-40 text-center">
+                      <div className="p-3 bg-gray-100 dark:bg-gray-800 rounded-full mb-2">
+                        <X className="h-6 w-6 text-gray-400 dark:text-gray-500" />
+                      </div>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        No devices found matching "{searchQuery}"
+                      </p>
+                    </div>
+                  )}
                 </div>
-              )
-            })
-          )}
+              </ScrollArea>
+
+              <div className="mt-4 flex justify-between">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowAllDevices(!showAllDevices)}
+                  className="text-blue-600 dark:text-blue-400 border-gray-300 dark:border-gray-600 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                >
+                  {showAllDevices ? "Show Less" : "Show All"}
+                </Button>
+                <Button
+                  onClick={() => setShowDeviceModal(true)}
+                  className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Device
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Post Modal */}
-        {selectedPost && (
-          <PostModal
-            post={selectedPost}
-            onClose={() => setSelectedPost(null)}
-            onReply={handleReply}
-            replyMessage={replyMessage}
-            setReplyMessage={setReplyMessage}
-            isDarkMode={isDarkMode}
-            onLike={handleLikePost}
-            onSave={handleSavePost}
-          />
-        )}
-      </main>
-
-      {/* Footer */}
-      <footer
-        className={`fixed bottom-0 left-0 right-0 ${
-          isDarkMode ? "bg-gray-900/95 border-gray-800" : "bg-white/95 border-gray-200"
-        } border-t backdrop-blur-lg z-30`}
-      >
-        <div className="max-w-4xl mx-auto px-4 py-3">
-          <div className="flex items-center justify-end">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => setShowCreateForm(true)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
-                  isDarkMode ? "bg-purple-600 hover:bg-purple-700" : "bg-purple-500 hover:bg-purple-600"
-                } text-white transition-colors`}
-              >
-                <FaPlusCircle />
-                <span>New Post</span>
-              </button>
+        {showDeviceModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md shadow-xl">
+              <h2 className="text-xl font-bold mb-4 text-gray-800 dark:text-gray-100">
+                Add New Device
+              </h2>
+              <div className="space-y-4">
+                <div>
+                  <label
+                    htmlFor="device-name"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1"
+                  >
+                    Device Name
+                  </label>
+                  <Input
+                    id="device-name"
+                    type="text"
+                    placeholder="e.g., Backyard Camera"
+                    value={newDeviceName}
+                    onChange={(e) => setNewDeviceName(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="device-type"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1"
+                  >
+                    Device Type
+                  </label>
+                  <select
+                    id="device-type"
+                    value={newDeviceType}
+                    onChange={(e) => setNewDeviceType(e.target.value)}
+                    className="w-full px-3 py-2 text-sm text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600"
+                  >
+                    <option>Light</option>
+                    <option>Thermostat</option>
+                    <option>AC</option>
+                    <option>Sensor</option>
+                    <option>Door</option>
+                  </select>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 mt-6">
+                <Button
+                  variant="outline"
+                  onClick={handleCancelAddDevice}
+                  className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleAddDevice}
+                  className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white"
+                >
+                  Add Device
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
-      </footer>
-
-      {/* Global Styles */}
-      <style jsx global>{`
-        .hide-scrollbar::-webkit-scrollbar {
-          display: none;
-        }
-        
-        .hide-scrollbar {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-        
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        
-        @keyframes fadeOut {
-          from { opacity: 1; }
-          to { opacity: 0; }
-        }
-        
-        @keyframes slideOut {
-          from { transform: translateX(0); opacity: 1; }
-          to { transform: translateX(-100%); opacity: 0; }
-        }
-        
-        .animate-fadeIn {
-          animation: fadeIn 0.3s ease-out forwards;
-        }
-        
-        .animate-fadeOut {
-          animation: fadeOut 1s ease-out forwards;
-          animation-delay: 1.5s;
-        }
-        
-        .animate-slideOut {
-          animation: slideOut 0.3s ease-out forwards;
-        }
-      `}</style>
+        )}
+      </div>
     </div>
-  )
+  );
+};
+
+export default HomeAssistant;
+// Zod Schema
+export const Schema = {
+    "commentary": "I will create a Next.js 13+ app that has a simple UI to help users manage their smart home devices. This will include several components like a dashboard view, device list, and control interface. I will ensure the app is responsive and works on both phone and computer.",
+    "template": "nextjs-developer",
+    "title": "Smart Home",
+    "description": "A simple smart home management app.",
+    "additional_dependencies": [],
+    "has_additional_dependencies": false,
+    "install_dependencies_command": "",
+    "port": 3000,
+    "file_path": "pages/index.tsx",
+    "code": "<see code above>"
 }
