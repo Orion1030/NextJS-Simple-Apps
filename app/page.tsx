@@ -12,29 +12,20 @@ import {
   FaLaugh,
   FaMeh,
   FaPlusCircle,
-  FaStream,
   FaReply,
   FaTimes,
   FaMagic,
   FaSun,
   FaMoon,
-  FaCalendarAlt,
   FaHeart,
   FaShare,
   FaBookmark,
-  FaPhone,
-  FaInfoCircle,
-  FaUserAlt,
   FaRegLightbulb,
   FaRegCommentDots,
   FaRegClock,
 } from "react-icons/fa"
-import dynamic from "next/dynamic"
-import type { ReactNode } from "react"
 
-// Types
 type MoodType = "happy" | "sad" | "angry" | "anxious" | "relaxed" | "excited" | "grateful"
-type ViewType = "feed" | "create" | "map" | "challenges" | "resources" | "profile"
 
 interface MoodPost {
   id: string
@@ -57,27 +48,16 @@ interface Reply {
   likes?: number
 }
 
-interface Challenge {
-  id: string
-  title: string
-  description: string
-  icon: ReactNode
-  duration: string
-  participants: number
-  isActive: boolean
+const useHasMounted = () => {
+  const [hasMounted, setHasMounted] = useState(false)
+
+  useEffect(() => {
+    setHasMounted(true)
+  }, [])
+
+  return hasMounted
 }
 
-interface Resource {
-  id: string
-  title: string
-  description: string
-  link: string
-  category: "crisis" | "therapy" | "meditation" | "community"
-  icon: ReactNode
-}
-
-
-// Constants
 const loadingTips = [
   "Tip: Keep your messages concise and authentic",
   "Did you know? Sharing moods helps build empathy",
@@ -137,81 +117,6 @@ const generateUsername = () => {
   }${Math.floor(100 + Math.random() * 900)}`
 }
 
-const generateMockChallenges = (): Challenge[] => [
-  {
-    id: "1",
-    title: "Gratitude Journal",
-    description: "Write down three things you're grateful for each day this week.",
-    icon: <FaRegLightbulb className="text-yellow-500" />,
-    duration: "7 days",
-    participants: 1243,
-    isActive: true,
-  },
-  {
-    id: "2",
-    title: "Mood Reflection",
-    description: "Take a moment each evening to reflect on your emotional journey throughout the day.",
-    icon: <FaRegCommentDots className="text-blue-500" />,
-    duration: "5 days",
-    participants: 876,
-    isActive: true,
-  },
-  {
-    id: "3",
-    title: "Random Acts of Kindness",
-    description: "Perform one small act of kindness each day and notice how it affects your mood.",
-    icon: <FaHeart className="text-red-500" />,
-    duration: "3 days",
-    participants: 2105,
-    isActive: false,
-  },
-  {
-    id: "4",
-    title: "Digital Detox",
-    description: "Reduce screen time by 50% and observe changes in your emotional wellbeing.",
-    icon: <FaRegClock className="text-green-500" />,
-    duration: "Weekend",
-    participants: 543,
-    isActive: false,
-  },
-]
-
-const generateMockResources = (): Resource[] => [
-  {
-    id: "1",
-    title: "Crisis Text Line",
-    description: "Text HOME to 741741 to connect with a Crisis Counselor",
-    link: "https://www.crisistextline.org/",
-    category: "crisis",
-    icon: <FaPhone className="text-red-500" />,
-  },
-  {
-    id: "2",
-    title: "BetterHelp Online Therapy",
-    description: "Professional therapy accessible online",
-    link: "https://www.betterhelp.com/",
-    category: "therapy",
-    icon: <FaRegCommentDots className="text-blue-500" />,
-  },
-  {
-    id: "3",
-    title: "Headspace",
-    description: "Meditation and mindfulness techniques",
-    link: "https://www.headspace.com/",
-    category: "meditation",
-    icon: <FaRegLightbulb className="text-orange-500" />,
-  },
-  {
-    id: "4",
-    title: "7 Cups",
-    description: "Online emotional support community",
-    link: "https://www.7cups.com/",
-    category: "community",
-    icon: <FaHeart className="text-pink-500" />,
-  },
-]
-
-// Components
 const PostModal = ({
   post,
   onClose,
@@ -388,197 +293,8 @@ const PostModal = ({
   )
 }
 
-const ChallengeCard = ({
-  challenge,
-  isDarkMode,
-  onJoin,
-}: {
-  challenge: Challenge
-  isDarkMode: boolean
-  onJoin: () => void
-}) => {
-  return (
-    <div
-      className={`${
-        isDarkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
-      } rounded-xl border p-5 transition-all hover:shadow-md`}
-    >
-      <div className="flex items-start">
-        <div className={`p-3 rounded-xl ${isDarkMode ? "bg-gray-700" : "bg-gray-100"} mr-4`}>{challenge.icon}</div>
-        <div className="flex-1">
-          <h3 className={`${isDarkMode ? "text-white" : "text-gray-800"} font-semibold text-lg mb-1`}>
-            {challenge.title}
-          </h3>
-          <p className={`${isDarkMode ? "text-gray-300" : "text-gray-600"} text-sm mb-3`}>{challenge.description}</p>
-
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <span className={`${isDarkMode ? "text-gray-400" : "text-gray-500"} text-xs flex items-center`}>
-                <FaRegClock className="mr-1" /> {challenge.duration}
-              </span>
-              <span className={`${isDarkMode ? "text-gray-400" : "text-gray-500"} text-xs flex items-center`}>
-                <FaUserAlt className="mr-1" /> {challenge.participants.toLocaleString()}
-              </span>
-            </div>
-            <button
-              onClick={onJoin}
-              className={`px-4 py-1.5 rounded-lg text-sm font-medium ${
-                challenge.isActive
-                  ? "bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400"
-                  : "bg-purple-500 text-white hover:bg-purple-600"
-              }`}
-            >
-              {challenge.isActive ? "Joined" : "Join"}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-const ResourceCard = ({ resource, isDarkMode }: { resource: Resource; isDarkMode: boolean }) => {
-  return (
-    <a
-      href={resource.link}
-      target="_blank"
-      rel="noopener noreferrer"
-      className={`${
-        isDarkMode ? "bg-gray-800 border-gray-700 hover:bg-gray-750" : "bg-white border-gray-200 hover:bg-gray-50"
-      } rounded-xl border p-5 transition-all hover:shadow-md block`}
-    >
-      <div className="flex items-start">
-        <div className={`p-3 rounded-xl ${isDarkMode ? "bg-gray-700" : "bg-gray-100"} mr-4`}>{resource.icon}</div>
-        <div>
-          <h3 className={`${isDarkMode ? "text-white" : "text-gray-800"} font-semibold text-lg mb-1`}>
-            {resource.title}
-          </h3>
-          <p className={`${isDarkMode ? "text-gray-300" : "text-gray-600"} text-sm`}>{resource.description}</p>
-
-          <div className="flex items-center mt-3">
-            <span
-              className={`${
-                resource.category === "crisis"
-                  ? "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400"
-                  : resource.category === "therapy"
-                    ? "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
-                    : resource.category === "meditation"
-                      ? "bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400"
-                      : "bg-pink-100 text-pink-600 dark:bg-pink-900/30 dark:text-pink-400"
-              } px-2 py-0.5 rounded text-xs font-medium`}
-            >
-              {resource.category.charAt(0).toUpperCase() + resource.category.slice(1)}
-            </span>
-          </div>
-        </div>
-      </div>
-    </a>
-  )
-}
-
-const NavBar = ({
-  view,
-  setView,
-  isDarkMode,
-  setIsDarkMode,
-}: {
-  view: ViewType
-  setView: (view: ViewType) => void
-  isDarkMode: boolean
-  setIsDarkMode: (isDark: boolean) => void
-}) => {
-  return (
-    <header
-      className={`p-4 backdrop-blur-lg border-b transition-colors duration-300 ${
-        isDarkMode ? "bg-gray-900/95 border-gray-800 text-white" : "bg-white/95 border-gray-200"
-      } sticky top-0 z-30`}
-    >
-      <div className="max-w-4xl mx-auto flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          <div className="bg-gradient-to-r from-purple-500 to-pink-500 w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold">
-            M
-          </div>
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
-            MoodSphere
-          </h1>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setIsDarkMode(!isDarkMode)}
-            className={`p-2 rounded-lg ${isDarkMode ? "hover:bg-gray-800" : "hover:bg-gray-100"} transition-all`}
-            aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
-          >
-            {isDarkMode ? <FaSun className="text-xl text-amber-400" /> : <FaMoon className="text-xl text-gray-600" />}
-          </button>
-
-          <button
-            onClick={() => setView("create")}
-            className={`p-2.5 rounded-xl ${
-              isDarkMode
-                ? "bg-gray-800 hover:bg-gray-700 border-gray-700"
-                : "bg-gray-100 hover:bg-gray-200 border-gray-200"
-            } border transition-all`}
-            aria-label="Create new post"
-          >
-            <FaPlusCircle className={`${isDarkMode ? "text-white" : "text-gray-700"} text-xl`} />
-          </button>
-        </div>
-      </div>
-
-      <nav className={`max-w-4xl mx-auto mt-4 flex items-center justify-between overflow-x-auto hide-scrollbar`}>
-        <button
-          onClick={() => setView("feed")}
-          className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
-            view === "feed"
-              ? isDarkMode
-                ? "bg-gray-800 text-white"
-                : "bg-gray-100 text-gray-900"
-              : isDarkMode
-                ? "text-gray-400 hover:text-white"
-                : "text-gray-500 hover:text-gray-900"
-          }`}
-        >
-          <FaStream /> <span>Feed</span>
-        </button>
-
-        <button
-          onClick={() => setView("challenges")}
-          className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
-            view === "challenges"
-              ? isDarkMode
-                ? "bg-gray-800 text-white"
-                : "bg-gray-100 text-gray-900"
-              : isDarkMode
-                ? "text-gray-400 hover:text-white"
-                : "text-gray-500 hover:text-gray-900"
-          }`}
-        >
-          <FaCalendarAlt /> <span>Challenges</span>
-        </button>
-
-        <button
-          onClick={() => setView("resources")}
-          className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
-            view === "resources"
-              ? isDarkMode
-                ? "bg-gray-800 text-white"
-                : "bg-gray-100 text-gray-900"
-              : isDarkMode
-                ? "text-gray-400 hover:text-white"
-                : "text-gray-500 hover:text-gray-900"
-          }`}
-        >
-          <FaInfoCircle /> <span>Resources</span>
-        </button>
-      </nav>
-    </header>
-  )
-}
-
-// Main Component
 export default function Page() {
-  const [view, setView] = useState<ViewType>("feed")
+  const hasMounted = useHasMounted()
   const [posts, setPosts] = useState<MoodPost[]>([])
   const [newPostMessage, setNewPostMessage] = useState("")
   const [selectedMood, setSelectedMood] = useState<MoodType | null>(null)
@@ -590,124 +306,42 @@ export default function Page() {
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [currentTip, setCurrentTip] = useState(0)
   const [currentMood, setCurrentMood] = useState(0)
-  const [challenges, setChallenges] = useState<Challenge[]>(generateMockChallenges())
-  const [resources] = useState<Resource[]>(generateMockResources())
+  const [showCreateForm, setShowCreateForm] = useState(false)
 
-  // Load posts from localStorage and clean up expired posts
   useEffect(() => {
-    // Safe check for browser environment
-    if (typeof window === "undefined") return
-
-    const savedPosts = localStorage.getItem("moodPosts")
-    if (savedPosts) {
-      try {
-        const parsedPosts = JSON.parse(savedPosts)
-        // Filter out expired posts
-        const validPosts = parsedPosts.filter((post: MoodPost) => post.expiresAt > Date.now())
-        setPosts(validPosts)
-      } catch (error) {
-        console.error("Error parsing saved posts:", error)
-        generateMockPosts()
+    const initializeClientData = () => {
+      const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
+      const savedTheme = localStorage.getItem("moodSphereTheme")
+      if (savedTheme) {
+        setIsDarkMode(savedTheme === "dark")
+      } else if (prefersDark) {
+        setIsDarkMode(true)
       }
-    } else {
-      generateMockPosts()
+
+      const tipInterval = setInterval(() => {
+        setCurrentTip((prev) => (prev + 1) % loadingTips.length)
+      }, 4000)
+
+      const moodInterval = setInterval(() => {
+        setCurrentMood((prev) => (prev + 1) % Object.keys(moodIcons).length)
+      }, 1000)
+
+      setTimeout(() => {
+        setIsLoading(false)
+        clearInterval(tipInterval)
+        clearInterval(moodInterval)
+      }, 2500)
+
+      return () => {
+        clearInterval(tipInterval)
+        clearInterval(moodInterval)
+      }
     }
 
-    // Check for dark mode preference
-    const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
-    const savedTheme = localStorage.getItem("moodSphereTheme")
-    if (savedTheme) {
-      setIsDarkMode(savedTheme === "dark")
-    } else if (prefersDark) {
-      setIsDarkMode(true)
-    }
-
-    // Loading animation
-    const tipInterval = setInterval(() => {
-      setCurrentTip((prev) => (prev + 1) % loadingTips.length)
-    }, 4000)
-
-    const moodInterval = setInterval(() => {
-      setCurrentMood((prev) => (prev + 1) % Object.keys(moodIcons).length)
-    }, 1000)
-
-    setTimeout(() => {
-      setIsLoading(false)
-      clearInterval(tipInterval)
-      clearInterval(moodInterval)
-    }, 2500)
-
-    return () => {
-      clearInterval(tipInterval)
-      clearInterval(moodInterval)
-    }
+    initializeClientData()
   }, [])
 
-  // Function to generate mock posts
-  const generateMockPosts = () => {
-    const mockPosts = Array.from({ length: 5 }, (_, i) => {
-      const mood = Object.keys(moodIcons)[Math.floor(Math.random() * Object.keys(moodIcons).length)] as MoodType
-      const cityNames = ["New York", "Tokyo", "London", "Sydney", "Berlin", "Paris", "Toronto"]
-      const cityName = cityNames[i % 7]
-
-      // Find the corresponding coordinates for this city
-      const cityCoords = {
-        "New York": { lat: 40.7128, lng: -74.006 },
-        Tokyo: { lat: 35.6762, lng: 139.6503 },
-        London: { lat: 51.5074, lng: -0.1278 },
-        Sydney: { lat: -33.8688, lng: 151.2093 },
-        Berlin: { lat: 52.52, lng: 13.405 },
-        Paris: { lat: 48.8566, lng: 2.3522 },
-        Toronto: { lat: 43.6532, lng: -79.3832 },
-      }[cityName]
-
-      // Add a small random offset
-      const latOffset = (Math.random() - 0.5) * 0.1
-      const lngOffset = (Math.random() - 0.5) * 0.1
-
-      return {
-        id: uuidv4(),
-        username: generateUsername(),
-        mood,
-        message: [
-          "Feeling absolutely fantastic today! The sun is shining and everything seems possible.",
-          "Had a rough day at work. Could use some encouragement.",
-          "So frustrated with public transportation today. Deep breaths...",
-          "Nervous about my presentation tomorrow. Any tips for calming anxiety?",
-          "Just finished a meditation session and feeling centered.",
-          "Excited about my upcoming trip! Can't wait to explore new places!",
-          "Grateful for the small moments of joy in my day today.",
-        ][i % 7],
-        timestamp: Date.now() - Math.floor(Math.random() * 86400000),
-        expiresAt: Date.now() + 86400000,
-        location: {
-          lat: cityCoords.lat + latOffset,
-          lng: cityCoords.lng + lngOffset,
-          city: cityName,
-        },
-        replies:
-          i % 3 === 0
-            ? [
-                {
-                  id: uuidv4(),
-                  username: generateUsername(),
-                  message: "I completely understand how you feel. Hang in there!",
-                  timestamp: Date.now() - Math.floor(Math.random() * 3600000),
-                  likes: Math.floor(Math.random() * 10),
-                },
-              ]
-            : [],
-        likes: Math.floor(Math.random() * 20),
-        isLiked: Math.random() > 0.7,
-        isSaved: Math.random() > 0.8,
-      }
-    })
-    setPosts(mockPosts)
-  }
-
-  // Save posts to localStorage whenever they change
   useEffect(() => {
-    if (typeof window === "undefined") return
     if (posts.length > 0) {
       try {
         localStorage.setItem("moodPosts", JSON.stringify(posts))
@@ -717,9 +351,7 @@ export default function Page() {
     }
   }, [posts])
 
-  // Save theme preference
   useEffect(() => {
-    if (typeof window === "undefined") return
     try {
       localStorage.setItem("moodSphereTheme", isDarkMode ? "dark" : "light")
     } catch (error) {
@@ -727,7 +359,6 @@ export default function Page() {
     }
   }, [isDarkMode])
 
-  // Swipe handlers for post dismissal
   const handlers = useSwipeable({
     onSwiping: (e) => {
       setIsSwiping(true)
@@ -738,7 +369,6 @@ export default function Page() {
         const translateX = Math.max(delta, -postWidth * 0.33)
         postElement.style.transform = `translateX(${translateX}px)`
 
-        // Add opacity effect based on swipe distance
         const opacity = 1 - Math.min(Math.abs(translateX) / (postWidth * 0.33), 0.5)
         postElement.style.opacity = opacity.toString()
       }
@@ -764,7 +394,6 @@ export default function Page() {
     delta: 5,
   })
 
-  // Create a new post
   const handleCreatePost = useCallback(() => {
     if (!selectedMood || !newPostMessage.trim()) return
 
@@ -774,7 +403,7 @@ export default function Page() {
       mood: selectedMood,
       message: newPostMessage.trim(),
       timestamp: Date.now(),
-      expiresAt: Date.now() + 86400000, // 24 hours
+      expiresAt: Date.now() + 86400000,
       replies: [],
       likes: 0,
     }
@@ -782,10 +411,9 @@ export default function Page() {
     setPosts((prev) => [newPost, ...prev])
     setNewPostMessage("")
     setSelectedMood(null)
-    setView("feed")
+    setShowCreateForm(false)
   }, [selectedMood, newPostMessage])
 
-  // Reply to a post
   const handleReply = useCallback(() => {
     if (!selectedPost || !replyMessage.trim()) return
 
@@ -812,7 +440,6 @@ export default function Page() {
     setSelectedPost(null)
   }, [replyMessage, selectedPost])
 
-  // Like a post
   const handleLikePost = useCallback(() => {
     if (!selectedPost) return
 
@@ -839,7 +466,6 @@ export default function Page() {
     )
   }, [selectedPost])
 
-  // Save a post
   const handleSavePost = useCallback(() => {
     if (!selectedPost) return
 
@@ -864,20 +490,9 @@ export default function Page() {
     )
   }, [selectedPost])
 
-  // Join a challenge
-  const handleJoinChallenge = useCallback(
-    (challengeId: string) => {
-      // Update the challenges state directly
-      const updatedChallenges = challenges.map((challenge) =>
-        challenge.id === challengeId ? { ...challenge, isActive: !challenge.isActive } : challenge,
-      )
-
-      // In a real app, we would persist this to a database
-      // For this demo, we'll update the local state
-      setChallenges(updatedChallenges)
-    },
-    [challenges],
-  )
+  if (!hasMounted) {
+    return null
+  }
 
   return (
     <div
@@ -911,17 +526,54 @@ export default function Page() {
         </div>
       )}
 
-      {/* Navigation */}
-      <NavBar view={view} setView={setView} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />
+      {/* Header */}
+      <header
+        className={`p-4 backdrop-blur-lg border-b transition-colors duration-300 ${
+          isDarkMode ? "bg-gray-900/95 border-gray-800 text-white" : "bg-white/95 border-gray-200"
+        } sticky top-0 z-30`}
+      >
+        <div className="max-w-4xl mx-auto flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <div className="bg-gradient-to-r from-purple-500 to-pink-500 w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold">
+              M
+            </div>
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
+              MoodSphere
+            </h1>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsDarkMode(!isDarkMode)}
+              className={`p-2 rounded-lg ${isDarkMode ? "hover:bg-gray-800" : "hover:bg-gray-100"} transition-all`}
+              aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
+            >
+              {isDarkMode ? <FaSun className="text-xl text-amber-400" /> : <FaMoon className="text-xl text-gray-600" />}
+            </button>
+
+            <button
+              onClick={() => setShowCreateForm(true)}
+              className={`p-2.5 rounded-xl ${
+                isDarkMode
+                  ? "bg-gray-800 hover:bg-gray-700 border-gray-700"
+                  : "bg-gray-100 hover:bg-gray-200 border-gray-200"
+              } border transition-all`}
+              aria-label="Create new post"
+            >
+              <FaPlusCircle className={`${isDarkMode ? "text-white" : "text-gray-700"} text-xl`} />
+            </button>
+          </div>
+        </div>
+      </header>
 
       {/* Main Content */}
       <main className="max-w-4xl mx-auto p-4 pb-20">
         {/* Create Post View */}
-        {view === "create" && (
+        {showCreateForm && (
           <div
             className={`${
               isDarkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
-            } backdrop-blur-lg rounded-2xl border p-6 animate-fadeIn shadow-lg`}
+            } backdrop-blur-lg rounded-2xl border p-6 animate-fadeIn shadow-lg mb-6`}
           >
             <div className="mb-8">
               <h2 className={`${isDarkMode ? "text-white" : "text-gray-800"} text-xl font-bold mb-6`}>
@@ -962,7 +614,7 @@ export default function Page() {
 
               <div className="flex gap-3">
                 <button
-                  onClick={() => setView("feed")}
+                  onClick={() => setShowCreateForm(false)}
                   className={`px-5 py-3.5 ${
                     isDarkMode
                       ? "bg-gray-700 hover:bg-gray-600 text-white"
@@ -984,220 +636,148 @@ export default function Page() {
         )}
 
         {/* Feed View */}
-        {view === "feed" && (
-          <div className="space-y-4" {...handlers}>
-            {posts.length === 0 ? (
-              <div
-                className={`p-8 text-center rounded-2xl ${
-                  isDarkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
-                } backdrop-blur-lg border animate-fadeIn shadow-lg`}
+        <div className="space-y-4" {...handlers}>
+          {posts.length === 0 ? (
+            <div
+              className={`p-8 text-center rounded-2xl ${
+                isDarkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
+              } backdrop-blur-lg border animate-fadeIn shadow-lg`}
+            >
+              <FaMagic className="text-4xl mb-3 mx-auto text-purple-500" />
+              <p className={`${isDarkMode ? "text-white" : "text-gray-600"} text-lg font-medium`}>
+                Be the first to share your mood!
+              </p>
+              <button
+                onClick={() => setShowCreateForm(true)}
+                className="mt-4 px-6 py-2.5 bg-purple-500 hover:bg-purple-600 text-white font-semibold rounded-xl transition-all"
               >
-                <FaMagic className="text-4xl mb-3 mx-auto text-purple-500" />
-                <p className={`${isDarkMode ? "text-white" : "text-gray-600"} text-lg font-medium`}>
-                  Be the first to share your mood!
-                </p>
-                <button
-                  onClick={() => setView("create")}
-                  className="mt-4 px-6 py-2.5 bg-purple-500 hover:bg-purple-600 text-white font-semibold rounded-xl transition-all"
+                Create Post
+              </button>
+            </div>
+          ) : (
+            posts.map((post) => {
+              const Icon = moodIcons[post.mood]
+              const colorClass = moodColors[post.mood]
+              const bgColorClass = moodBgColors[post.mood]
+
+              return (
+                <div
+                  key={post.id}
+                  id={post.id}
+                  className={`post-item relative ${
+                    isDarkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
+                  } backdrop-blur-lg rounded-2xl border overflow-hidden transition-transform ${
+                    deletingId === post.id ? "animate-slideOut" : ""
+                  } shadow-md`}
+                  onClick={() => !isSwiping && setSelectedPost(post)}
                 >
-                  Create Post
-                </button>
-              </div>
-            ) : (
-              posts.map((post) => {
-                const Icon = moodIcons[post.mood]
-                const colorClass = moodColors[post.mood]
-                const bgColorClass = moodBgColors[post.mood]
-
-                return (
-                  <div
-                    key={post.id}
-                    id={post.id}
-                    className={`post-item relative ${
-                      isDarkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
-                    } backdrop-blur-lg rounded-2xl border overflow-hidden transition-transform ${
-                      deletingId === post.id ? "animate-slideOut" : ""
-                    } shadow-md`}
-                    onClick={() => !isSwiping && setSelectedPost(post)}
-                  >
-                    <div className="p-5 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
-                      <div className="flex items-center gap-4 mb-4">
-                        <div
-                          className={`p-2.5 rounded-xl ${bgColorClass} bg-opacity-20 border border-opacity-30 ${bgColorClass.replace(
-                            "bg-",
-                            "border-",
-                          )}`}
-                        >
-                          <Icon className={`text-xl ${colorClass}`} />
-                        </div>
-                        <div>
-                          <h3 className={`${isDarkMode ? "text-white" : "text-gray-800"} text-base font-semibold`}>
-                            {post.username}
-                          </h3>
-                          <p className="text-xs text-gray-500 font-medium">
-                            {new Date(post.timestamp).toLocaleTimeString([], {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </p>
-                        </div>
+                  <div className="p-5 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+                    <div className="flex items-center gap-4 mb-4">
+                      <div
+                        className={`p-2.5 rounded-xl ${bgColorClass} bg-opacity-20 border border-opacity-30 ${bgColorClass.replace(
+                          "bg-",
+                          "border-",
+                        )}`}
+                      >
+                        <Icon className={`text-xl ${colorClass}`} />
                       </div>
-
-                      <p className={`${isDarkMode ? "text-gray-200" : "text-gray-700"} text-base mb-4 pl-2`}>
-                        {post.message}
-                      </p>
-
-                      <div className="flex items-center gap-4 mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setPosts((prev) =>
-                              prev.map((p) =>
-                                p.id === post.id
-                                  ? { ...p, likes: p.isLiked ? p.likes - 1 : p.likes + 1, isLiked: !p.isLiked }
-                                  : p,
-                              ),
-                            )
-                          }}
-                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full ${
-                            post.isLiked
-                              ? "bg-red-100 dark:bg-red-900/30 text-red-500"
-                              : "hover:bg-gray-100 dark:hover:bg-gray-700"
-                          } transition-colors`}
-                        >
-                          <FaHeart className={post.isLiked ? "text-red-500" : "text-gray-400"} />
-                          <span>{post.likes}</span>
-                        </button>
-
-                        <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                          <FaReply className="text-gray-400" />
-                          <span>{post.replies?.length || 0}</span>
-                        </button>
-
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setPosts((prev) => prev.map((p) => (p.id === post.id ? { ...p, isSaved: !p.isSaved } : p)))
-                          }}
-                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full ${
-                            post.isSaved
-                              ? "bg-blue-100 dark:bg-blue-900/30 text-blue-500"
-                              : "hover:bg-gray-100 dark:hover:bg-gray-700"
-                          } transition-colors ml-auto`}
-                        >
-                          <FaBookmark className={post.isSaved ? "text-blue-500" : "text-gray-400"} />
-                        </button>
-
-                        <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                          <FaShare className="text-gray-400" />
-                        </button>
+                      <div>
+                        <h3 className={`${isDarkMode ? "text-white" : "text-gray-800"} text-base font-semibold`}>
+                          {post.username}
+                        </h3>
+                        <p className="text-xs text-gray-500 font-medium">
+                          {new Date(post.timestamp).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </p>
                       </div>
-
-                      {post.replies && post.replies.length > 0 && (
-                        <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
-                          {post.replies.slice(0, 1).map((reply) => (
-                            <div key={reply.id} className="ml-4 pl-3 border-l-2 border-purple-200/60 mb-3">
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className={`text-sm font-bold ${isDarkMode ? "text-white" : "text-gray-600"}`}>
-                                  {reply.username}
-                                </span>
-                                <span className="text-xs text-gray-400">
-                                  {new Date(reply.timestamp).toLocaleTimeString([], {
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                  })}
-                                </span>
-                              </div>
-                              <p className={`text-sm font-medium ${isDarkMode ? "text-gray-300" : "text-gray-500"}`}>
-                                {reply.message}
-                              </p>
-                            </div>
-                          ))}
-
-                          {post.replies.length > 1 && (
-                            <div className="mt-2 text-purple-500 text-sm font-medium">
-                              + {post.replies.length - 1} more {post.replies.length === 2 ? "reply" : "replies"}
-                            </div>
-                          )}
-                        </div>
-                      )}
                     </div>
+
+                    <p className={`${isDarkMode ? "text-gray-200" : "text-gray-700"} text-base mb-4 pl-2`}>
+                      {post.message}
+                    </p>
+
+                    <div className="flex items-center gap-4 mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setPosts((prev) =>
+                            prev.map((p) =>
+                              p.id === post.id
+                                ? { ...p, likes: p.isLiked ? p.likes - 1 : p.likes + 1, isLiked: !p.isLiked }
+                                : p,
+                            ),
+                          )
+                        }}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full ${
+                          post.isLiked
+                            ? "bg-red-100 dark:bg-red-900/30 text-red-500"
+                            : "hover:bg-gray-100 dark:hover:bg-gray-700"
+                        } transition-colors`}
+                      >
+                        <FaHeart className={post.isLiked ? "text-red-500" : "text-gray-400"} />
+                        <span>{post.likes}</span>
+                      </button>
+
+                      <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                        <FaReply className="text-gray-400" />
+                        <span>{post.replies?.length || 0}</span>
+                      </button>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setPosts((prev) => prev.map((p) => (p.id === post.id ? { ...p, isSaved: !p.isSaved } : p)))
+                        }}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full ${
+                          post.isSaved
+                            ? "bg-blue-100 dark:bg-blue-900/30 text-blue-500"
+                            : "hover:bg-gray-100 dark:hover:bg-gray-700"
+                        } transition-colors ml-auto`}
+                      >
+                        <FaBookmark className={post.isSaved ? "text-blue-500" : "text-gray-400"} />
+                      </button>
+
+                      <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                        <FaShare className="text-gray-400" />
+                      </button>
+                    </div>
+
+                    {post.replies && post.replies.length > 0 && (
+                      <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
+                        {post.replies.slice(0, 1).map((reply) => (
+                          <div key={reply.id} className="ml-4 pl-3 border-l-2 border-purple-200/60 mb-3">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className={`text-sm font-bold ${isDarkMode ? "text-white" : "text-gray-600"}`}>
+                                {reply.username}
+                              </span>
+                              <span className="text-xs text-gray-400">
+                                {new Date(reply.timestamp).toLocaleTimeString([], {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                              </span>
+                            </div>
+                            <p className={`text-sm font-medium ${isDarkMode ? "text-gray-300" : "text-gray-500"}`}>
+                              {reply.message}
+                            </p>
+                          </div>
+                        ))}
+
+                        {post.replies.length > 1 && (
+                          <div className="mt-2 text-purple-500 text-sm font-medium">
+                            + {post.replies.length - 1} more {post.replies.length === 2 ? "reply" : "replies"}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
-                )
-              })
-            )}
-          </div>
-        )}
-
-        {/* Challenges View */}
-        {view === "challenges" && (
-          <div className="space-y-6 animate-fadeIn">
-            <div
-              className={`p-6 rounded-xl ${
-                isDarkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
-              } border shadow-md`}
-            >
-              <h2 className={`${isDarkMode ? "text-white" : "text-gray-800"} text-xl font-bold mb-2`}>
-                Mood Challenges
-              </h2>
-              <p className={`${isDarkMode ? "text-gray-300" : "text-gray-600"} text-sm`}>
-                Join these activities to improve your emotional wellbeing and connect with others.
-              </p>
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2">
-              {challenges.map((challenge) => (
-                <ChallengeCard
-                  key={challenge.id}
-                  challenge={challenge}
-                  isDarkMode={isDarkMode}
-                  onJoin={() => handleJoinChallenge(challenge.id)}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Resources View */}
-        {view === "resources" && (
-          <div className="space-y-6 animate-fadeIn">
-            <div
-              className={`p-6 rounded-xl ${
-                isDarkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
-              } border shadow-md`}
-            >
-              <h2 className={`${isDarkMode ? "text-white" : "text-gray-800"} text-xl font-bold mb-2`}>
-                Mental Health Resources
-              </h2>
-              <p className={`${isDarkMode ? "text-gray-300" : "text-gray-600"} text-sm`}>
-                Access professional support and tools for your emotional wellbeing.
-              </p>
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2">
-              {resources.map((resource) => (
-                <ResourceCard key={resource.id} resource={resource} isDarkMode={isDarkMode} />
-              ))}
-            </div>
-
-            <div
-              className={`p-4 rounded-xl ${
-                isDarkMode ? "bg-red-900/30 border-red-800/50 text-white" : "bg-red-50 border-red-100 text-red-800"
-              } border`}
-            >
-              <div className="flex items-start">
-                <FaInfoCircle className="text-lg mt-0.5 mr-3" />
-                <div>
-                  <h3 className="font-semibold mb-1">Emergency Help</h3>
-                  <p className="text-sm">
-                    If you're experiencing a mental health emergency, please call your local emergency services (911 in
-                    the US) or a crisis hotline immediately.
-                  </p>
                 </div>
-              </div>
-            </div>
-          </div>
-        )}
+              )
+            })
+          )}
+        </div>
 
         {/* Post Modal */}
         {selectedPost && (
@@ -1214,62 +794,28 @@ export default function Page() {
         )}
       </main>
 
-      {/* Mobile Navigation */}
-      <nav
+      {/* Footer */}
+      <footer
         className={`fixed bottom-0 left-0 right-0 ${
           isDarkMode ? "bg-gray-900/95 border-gray-800" : "bg-white/95 border-gray-200"
-        } border-t backdrop-blur-lg z-30 md:hidden`}
+        } border-t backdrop-blur-lg z-30`}
       >
-        <div className="flex items-center justify-around">
-          <button
-            onClick={() => setView("feed")}
-            className={`p-4 flex flex-col items-center gap-1 ${
-              view === "feed"
-                ? isDarkMode
-                  ? "text-purple-400"
-                  : "text-purple-600"
-                : isDarkMode
-                  ? "text-gray-400"
-                  : "text-gray-500"
-            }`}
-          >
-            <FaStream />
-            <span className="text-xs">Feed</span>
-          </button>
-
-          <button
-            onClick={() => setView("challenges")}
-            className={`p-4 flex flex-col items-center gap-1 ${
-              view === "challenges"
-                ? isDarkMode
-                  ? "text-purple-400"
-                  : "text-purple-600"
-                : isDarkMode
-                  ? "text-gray-400"
-                  : "text-gray-500"
-            }`}
-          >
-            <FaCalendarAlt />
-            <span className="text-xs">Challenges</span>
-          </button>
-
-          <button
-            onClick={() => setView("resources")}
-            className={`p-4 flex flex-col items-center gap-1 ${
-              view === "resources"
-                ? isDarkMode
-                  ? "text-purple-400"
-                  : "text-purple-600"
-                : isDarkMode
-                  ? "text-gray-400"
-                  : "text-gray-500"
-            }`}
-          >
-            <FaInfoCircle />
-            <span className="text-xs">Resources</span>
-          </button>
+        <div className="max-w-4xl mx-auto px-4 py-3">
+          <div className="flex items-center justify-end">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setShowCreateForm(true)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
+                  isDarkMode ? "bg-purple-600 hover:bg-purple-700" : "bg-purple-500 hover:bg-purple-600"
+                } text-white transition-colors`}
+              >
+                <FaPlusCircle />
+                <span>New Post</span>
+              </button>
+            </div>
+          </div>
         </div>
-      </nav>
+      </footer>
 
       {/* Global Styles */}
       <style jsx global>{`
@@ -1308,20 +854,6 @@ export default function Page() {
         
         .animate-slideOut {
           animation: slideOut 0.3s ease-out forwards;
-        }
-        
-        /* Leaflet custom styles */
-        .leaflet-container {
-          font: inherit;
-          border-radius: 0.75rem;
-        }
-        
-        .leaflet-popup-content-wrapper {
-          border-radius: 0.5rem;
-        }
-        
-        .leaflet-popup-content {
-          margin: 0;
         }
       `}</style>
     </div>
