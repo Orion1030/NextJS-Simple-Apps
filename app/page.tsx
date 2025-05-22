@@ -1,4 +1,5 @@
 "use client"
+
 import { useState, useEffect, useCallback, useRef } from "react"
 import { v4 as uuidv4 } from "uuid"
 import { useSwipeable } from "react-swipeable"
@@ -17,35 +18,19 @@ import {
   FaMagic,
   FaSun,
   FaMoon,
-  FaGlobeAmericas,
   FaCalendarAlt,
   FaHeart,
   FaShare,
   FaBookmark,
   FaPhone,
   FaInfoCircle,
-  FaMapMarkerAlt,
   FaUserAlt,
   FaRegLightbulb,
   FaRegCommentDots,
   FaRegClock,
 } from "react-icons/fa"
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet"
-import "leaflet/dist/leaflet.css"
-import L from "leaflet"
+import dynamic from "next/dynamic"
 import type { ReactNode } from "react"
-
-// Fix Leaflet icon issue
-interface ExtendedIconDefault extends L.Icon.Default {
-  _getIconUrl?: () => string;
-}
-
-delete (L.Icon.Default.prototype as ExtendedIconDefault)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
-  iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
-  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
-})
 
 // Types
 type MoodType = "happy" | "sad" | "angry" | "anxious" | "relaxed" | "excited" | "grateful"
@@ -58,12 +43,6 @@ interface MoodPost {
   message: string
   timestamp: number
   expiresAt: number
-  location?: {
-    lat: number
-    lng: number
-    city?: string
-    country?: string
-  }
   replies?: Reply[]
   likes: number
   isLiked?: boolean
@@ -97,6 +76,7 @@ interface Resource {
   icon: ReactNode
 }
 
+
 // Constants
 const loadingTips = [
   "Tip: Keep your messages concise and authentic",
@@ -105,7 +85,6 @@ const loadingTips = [
   "Pro tip: Swipe left on posts to dismiss them",
   "Fun fact: Your username is randomly generated",
   "Challenge yourself with our weekly mood activities",
-  "Explore the Mood Map to see how others feel globally",
   "Need support? Check our mental health resources",
 ]
 
@@ -153,40 +132,9 @@ const generateUsername = () => {
     "Vibrant",
   ]
   const nouns = ["Whisper", "Horizon", "Moment", "Essence", "Bloom", "Nebula", "Breeze", "Ripple", "Echo", "Spark"]
-  return `${adjectives[Math.floor(Math.random() * adjectives.length)]}${nouns[Math.floor(Math.random() * nouns.length)]}${Math.floor(100 + Math.random() * 900)}`
-}
-
-const generateRandomLocation = () => {
-  // Generate more realistic coordinates
-  // Sydney: -33.8688, 151.2093
-  // New York: 40.7128, -74.0060
-  // London: 51.5074, -0.1278
-  // Tokyo: 35.6762, 139.6503
-  // Berlin: 52.5200, 13.4050
-  // Paris: 48.8566, 2.3522
-  // Toronto: 43.6532, -79.3832
-
-  const cities = [
-    { name: "Sydney", lat: -33.8688, lng: 151.2093 },
-    { name: "New York", lat: 40.7128, lng: -74.006 },
-    { name: "London", lat: 51.5074, lng: -0.1278 },
-    { name: "Tokyo", lat: 35.6762, lng: 139.6503 },
-    { name: "Berlin", lat: 52.52, lng: 13.405 },
-    { name: "Paris", lat: 48.8566, lng: 2.3522 },
-    { name: "Toronto", lat: 43.6532, lng: -79.3832 },
-  ]
-
-  const randomCity = cities[Math.floor(Math.random() * cities.length)]
-
-  // Add a small random offset to prevent markers from stacking exactly
-  const latOffset = (Math.random() - 0.5) * 0.1
-  const lngOffset = (Math.random() - 0.5) * 0.1
-
-  return {
-    lat: randomCity.lat + latOffset,
-    lng: randomCity.lng + lngOffset,
-    city: randomCity.name,
-  }
+  return `${adjectives[Math.floor(Math.random() * adjectives.length)]}${
+    nouns[Math.floor(Math.random() * nouns.length)]
+  }${Math.floor(100 + Math.random() * 900)}`
 }
 
 const generateMockChallenges = (): Challenge[] => [
@@ -303,11 +251,15 @@ const PostModal = ({
 
   return (
     <div
-      className={`fixed inset-0 ${isDarkMode ? "bg-black/70" : "bg-black/30"} backdrop-blur-lg flex items-center justify-center p-4 animate-fadeIn z-50`}
+      className={`fixed inset-0 ${
+        isDarkMode ? "bg-black/70" : "bg-black/30"
+      } backdrop-blur-lg flex items-center justify-center p-4 animate-fadeIn z-50`}
     >
       <div
         ref={modalRef}
-        className={`${isDarkMode ? "bg-gray-800/90 text-white border-gray-700" : "bg-white/90 text-gray-800 border-gray-200"} rounded-2xl backdrop-blur-lg border w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-xl`}
+        className={`${
+          isDarkMode ? "bg-gray-800/90 text-white border-gray-700" : "bg-white/90 text-gray-800 border-gray-200"
+        } rounded-2xl backdrop-blur-lg border w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-xl`}
       >
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">
@@ -323,7 +275,10 @@ const PostModal = ({
           <div className="mb-8">
             <div className="flex items-center gap-4 mb-4">
               <div
-                className={`p-3 rounded-xl ${bgColorClass} bg-opacity-20 border border-opacity-30 ${bgColorClass.replace("bg-", "border-")}`}
+                className={`p-3 rounded-xl ${bgColorClass} bg-opacity-20 border border-opacity-30 ${bgColorClass.replace(
+                  "bg-",
+                  "border-",
+                )}`}
               >
                 <Icon className={`text-2xl ${colorClass}`} />
               </div>
@@ -338,26 +293,28 @@ const PostModal = ({
                   })}
                 </p>
               </div>
-              {post.location && (
-                <div className="ml-auto flex items-center text-sm text-gray-500">
-                  <FaMapMarkerAlt className="mr-1" />
-                  <span>{post.location.city || "Unknown location"}</span>
-                </div>
-              )}
             </div>
             <p className={`${isDarkMode ? "text-white" : "text-gray-700"} text-base leading-relaxed`}>{post.message}</p>
 
             <div className="flex items-center gap-4 mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
               <button
                 onClick={onLike}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full ${post.isLiked ? "bg-red-100 dark:bg-red-900/30 text-red-500" : "hover:bg-gray-100 dark:hover:bg-gray-700"} transition-colors`}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full ${
+                  post.isLiked
+                    ? "bg-red-100 dark:bg-red-900/30 text-red-500"
+                    : "hover:bg-gray-100 dark:hover:bg-gray-700"
+                } transition-colors`}
               >
                 <FaHeart className={post.isLiked ? "text-red-500" : "text-gray-400"} />
                 <span>{post.likes}</span>
               </button>
               <button
                 onClick={onSave}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full ${post.isSaved ? "bg-blue-100 dark:bg-blue-900/30 text-blue-500" : "hover:bg-gray-100 dark:hover:bg-gray-700"} transition-colors`}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full ${
+                  post.isSaved
+                    ? "bg-blue-100 dark:bg-blue-900/30 text-blue-500"
+                    : "hover:bg-gray-100 dark:hover:bg-gray-700"
+                } transition-colors`}
               >
                 <FaBookmark className={post.isSaved ? "text-blue-500" : "text-gray-400"} />
               </button>
@@ -373,7 +330,11 @@ const PostModal = ({
                 value={replyMessage}
                 onChange={(e) => setReplyMessage(e.target.value)}
                 placeholder="Write your response..."
-                className={`${isDarkMode ? "bg-gray-700 border-gray-600 placeholder:text-gray-400" : "bg-white border-gray-200 placeholder:text-gray-500"} w-full p-4 rounded-xl border focus:border-purple-300 focus:ring-2 focus:ring-purple-200 outline-none transition-all resize-none`}
+                className={`${
+                  isDarkMode
+                    ? "bg-gray-700 border-gray-600 placeholder:text-gray-400"
+                    : "bg-white border-gray-200 placeholder:text-gray-500"
+                } w-full p-4 rounded-xl border focus:border-purple-300 focus:ring-2 focus:ring-purple-200 outline-none transition-all resize-none`}
                 rows={3}
               />
               <button
@@ -427,89 +388,6 @@ const PostModal = ({
   )
 }
 
-const MoodMap = ({ posts, isDarkMode }: { posts: MoodPost[]; isDarkMode: boolean }) => {
-  // Filter posts with location data and log them for debugging
-  const postsWithLocation = posts.filter((post) => post.location)
-  console.log("Posts with location data:", postsWithLocation)
-
-  return (
-    <div className="h-[70vh] rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-lg">
-      <MapContainer center={[20, 0]} zoom={2} style={{ height: "100%", width: "100%" }}>
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url={
-            isDarkMode
-              ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-              : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          }
-        />
-        {postsWithLocation.map((post) => {
-          const Icon = moodIcons[post.mood]
-          const colorClass = moodColors[post.mood]
-          const bgColorClass = moodBgColors[post.mood]
-
-          // Log each marker being created
-          console.log("Creating marker for:", post.location)
-
-          return (
-            <Marker
-              key={post.id}
-              position={[post.location!.lat, post.location!.lng]}
-              icon={L.divIcon({
-                className: "custom-div-icon",
-                html: `<div class="marker-pin ${post.mood}"><div class="marker-icon"></div></div>`,
-                iconSize: [40, 40],
-                iconAnchor: [20, 40],
-              })}
-            >
-              <Popup>
-                <div className="p-3">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Icon className={`${colorClass}`} />
-                    <span className="font-semibold">{post.username}</span>
-                  </div>
-                  <p className="text-sm mb-2">{post.message}</p>
-                  <div className="text-xs text-gray-500 flex items-center">
-                    <FaMapMarkerAlt className="mr-1" />
-                    {post.location!.city || "Unknown location"}
-                  </div>
-                </div>
-              </Popup>
-            </Marker>
-          )
-        })}
-      </MapContainer>
-
-      <style jsx global>{`
-        .marker-pin {
-          width: 30px;
-          height: 30px;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          position: relative;
-          box-shadow: 0 0 10px rgba(0,0,0,0.3);
-          border: 2px solid white;
-        }
-        .marker-icon {
-          width: 16px;
-          height: 16px;
-          border-radius: 50%;
-          background-color: white;
-        }
-        .marker-pin.happy { background-color: rgba(234, 179, 8, 0.9); }
-        .marker-pin.sad { background-color: rgba(59, 130, 246, 0.9); }
-        .marker-pin.angry { background-color: rgba(239, 68, 68, 0.9); }
-        .marker-pin.anxious { background-color: rgba(249, 115, 22, 0.9); }
-        .marker-pin.relaxed { background-color: rgba(34, 197, 94, 0.9); }
-        .marker-pin.excited { background-color: rgba(168, 85, 247, 0.9); }
-        .marker-pin.grateful { background-color: rgba(236, 72, 153, 0.9); }
-      `}</style>
-    </div>
-  )
-}
-
 const ChallengeCard = ({
   challenge,
   isDarkMode,
@@ -521,7 +399,9 @@ const ChallengeCard = ({
 }) => {
   return (
     <div
-      className={`${isDarkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"} rounded-xl border p-5 transition-all hover:shadow-md`}
+      className={`${
+        isDarkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
+      } rounded-xl border p-5 transition-all hover:shadow-md`}
     >
       <div className="flex items-start">
         <div className={`p-3 rounded-xl ${isDarkMode ? "bg-gray-700" : "bg-gray-100"} mr-4`}>{challenge.icon}</div>
@@ -563,7 +443,9 @@ const ResourceCard = ({ resource, isDarkMode }: { resource: Resource; isDarkMode
       href={resource.link}
       target="_blank"
       rel="noopener noreferrer"
-      className={`${isDarkMode ? "bg-gray-800 border-gray-700 hover:bg-gray-750" : "bg-white border-gray-200 hover:bg-gray-50"} rounded-xl border p-5 transition-all hover:shadow-md block`}
+      className={`${
+        isDarkMode ? "bg-gray-800 border-gray-700 hover:bg-gray-750" : "bg-white border-gray-200 hover:bg-gray-50"
+      } rounded-xl border p-5 transition-all hover:shadow-md block`}
     >
       <div className="flex items-start">
         <div className={`p-3 rounded-xl ${isDarkMode ? "bg-gray-700" : "bg-gray-100"} mr-4`}>{resource.icon}</div>
@@ -661,21 +543,6 @@ const NavBar = ({
         </button>
 
         <button
-          onClick={() => setView("map")}
-          className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
-            view === "map"
-              ? isDarkMode
-                ? "bg-gray-800 text-white"
-                : "bg-gray-100 text-gray-900"
-              : isDarkMode
-                ? "text-gray-400 hover:text-white"
-                : "text-gray-500 hover:text-gray-900"
-          }`}
-        >
-          <FaGlobeAmericas /> <span>Mood Map</span>
-        </button>
-
-        <button
           onClick={() => setView("challenges")}
           className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
             view === "challenges"
@@ -710,7 +577,7 @@ const NavBar = ({
 }
 
 // Main Component
-const Home = () => {
+export default function Page() {
   const [view, setView] = useState<ViewType>("feed")
   const [posts, setPosts] = useState<MoodPost[]>([])
   const [newPostMessage, setNewPostMessage] = useState("")
@@ -725,86 +592,34 @@ const Home = () => {
   const [currentMood, setCurrentMood] = useState(0)
   const [challenges, setChallenges] = useState<Challenge[]>(generateMockChallenges())
   const [resources] = useState<Resource[]>(generateMockResources())
-  const [shareLocation, setShareLocation] = useState(false)
 
   // Load posts from localStorage and clean up expired posts
   useEffect(() => {
+    // Safe check for browser environment
+    if (typeof window === "undefined") return
+
     const savedPosts = localStorage.getItem("moodPosts")
     if (savedPosts) {
-      const parsedPosts = JSON.parse(savedPosts)
-      // Filter out expired posts
-      const validPosts = parsedPosts.filter((post: MoodPost) => post.expiresAt > Date.now())
-      setPosts(validPosts)
+      try {
+        const parsedPosts = JSON.parse(savedPosts)
+        // Filter out expired posts
+        const validPosts = parsedPosts.filter((post: MoodPost) => post.expiresAt > Date.now())
+        setPosts(validPosts)
+      } catch (error) {
+        console.error("Error parsing saved posts:", error)
+        generateMockPosts()
+      }
     } else {
-      // Generate some mock posts if none exist
-      const mockPosts = Array.from({ length: 5 }, (_, i) => {
-        const mood = Object.keys(moodIcons)[Math.floor(Math.random() * Object.keys(moodIcons).length)] as MoodType
-        const location = generateRandomLocation()
-        const cityNames = ["New York", "Tokyo", "London", "Sydney", "Berlin", "Paris", "Toronto"]
-        const cityName = cityNames[i % 7]
-
-        // Find the corresponding coordinates for this city
-        const cityCoords = {
-          "New York": { lat: 40.7128, lng: -74.006 },
-          Tokyo: { lat: 35.6762, lng: 139.6503 },
-          London: { lat: 51.5074, lng: -0.1278 },
-          Sydney: { lat: -33.8688, lng: 151.2093 },
-          Berlin: { lat: 52.52, lng: 13.405 },
-          Paris: { lat: 48.8566, lng: 2.3522 },
-          Toronto: { lat: 43.6532, lng: -79.3832 },
-        }[cityName]
-
-        // Add a small random offset
-        const latOffset = (Math.random() - 0.5) * 0.1
-        const lngOffset = (Math.random() - 0.5) * 0.1
-
-        return {
-          id: uuidv4(),
-          username: generateUsername(),
-          mood,
-          message: [
-            "Feeling absolutely fantastic today! The sun is shining and everything seems possible.",
-            "Had a rough day at work. Could use some encouragement.",
-            "So frustrated with public transportation today. Deep breaths...",
-            "Nervous about my presentation tomorrow. Any tips for calming anxiety?",
-            "Just finished a meditation session and feeling centered.",
-            "Excited about my upcoming trip! Can't wait to explore new places!",
-            "Grateful for the small moments of joy in my day today.",
-          ][i % 7],
-          timestamp: Date.now() - Math.floor(Math.random() * 86400000),
-          expiresAt: Date.now() + 86400000,
-          location: {
-            lat: cityCoords.lat + latOffset,
-            lng: cityCoords.lng + lngOffset,
-            city: cityName,
-          },
-          replies:
-            i % 3 === 0
-              ? [
-                  {
-                    id: uuidv4(),
-                    username: generateUsername(),
-                    message: "I completely understand how you feel. Hang in there!",
-                    timestamp: Date.now() - Math.floor(Math.random() * 3600000),
-                    likes: Math.floor(Math.random() * 10),
-                  },
-                ]
-              : [],
-          likes: Math.floor(Math.random() * 20),
-          isLiked: Math.random() > 0.7,
-          isSaved: Math.random() > 0.8,
-        }
-      })
-      setPosts(mockPosts)
+      generateMockPosts()
     }
 
     // Check for dark mode preference
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches
+    const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
     const savedTheme = localStorage.getItem("moodSphereTheme")
     if (savedTheme) {
       setIsDarkMode(savedTheme === "dark")
-    } else {
-      setIsDarkMode(prefersDark)
+    } else if (prefersDark) {
+      setIsDarkMode(true)
     }
 
     // Loading animation
@@ -828,23 +643,95 @@ const Home = () => {
     }
   }, [])
 
+  // Function to generate mock posts
+  const generateMockPosts = () => {
+    const mockPosts = Array.from({ length: 5 }, (_, i) => {
+      const mood = Object.keys(moodIcons)[Math.floor(Math.random() * Object.keys(moodIcons).length)] as MoodType
+      const cityNames = ["New York", "Tokyo", "London", "Sydney", "Berlin", "Paris", "Toronto"]
+      const cityName = cityNames[i % 7]
+
+      // Find the corresponding coordinates for this city
+      const cityCoords = {
+        "New York": { lat: 40.7128, lng: -74.006 },
+        Tokyo: { lat: 35.6762, lng: 139.6503 },
+        London: { lat: 51.5074, lng: -0.1278 },
+        Sydney: { lat: -33.8688, lng: 151.2093 },
+        Berlin: { lat: 52.52, lng: 13.405 },
+        Paris: { lat: 48.8566, lng: 2.3522 },
+        Toronto: { lat: 43.6532, lng: -79.3832 },
+      }[cityName]
+
+      // Add a small random offset
+      const latOffset = (Math.random() - 0.5) * 0.1
+      const lngOffset = (Math.random() - 0.5) * 0.1
+
+      return {
+        id: uuidv4(),
+        username: generateUsername(),
+        mood,
+        message: [
+          "Feeling absolutely fantastic today! The sun is shining and everything seems possible.",
+          "Had a rough day at work. Could use some encouragement.",
+          "So frustrated with public transportation today. Deep breaths...",
+          "Nervous about my presentation tomorrow. Any tips for calming anxiety?",
+          "Just finished a meditation session and feeling centered.",
+          "Excited about my upcoming trip! Can't wait to explore new places!",
+          "Grateful for the small moments of joy in my day today.",
+        ][i % 7],
+        timestamp: Date.now() - Math.floor(Math.random() * 86400000),
+        expiresAt: Date.now() + 86400000,
+        location: {
+          lat: cityCoords.lat + latOffset,
+          lng: cityCoords.lng + lngOffset,
+          city: cityName,
+        },
+        replies:
+          i % 3 === 0
+            ? [
+                {
+                  id: uuidv4(),
+                  username: generateUsername(),
+                  message: "I completely understand how you feel. Hang in there!",
+                  timestamp: Date.now() - Math.floor(Math.random() * 3600000),
+                  likes: Math.floor(Math.random() * 10),
+                },
+              ]
+            : [],
+        likes: Math.floor(Math.random() * 20),
+        isLiked: Math.random() > 0.7,
+        isSaved: Math.random() > 0.8,
+      }
+    })
+    setPosts(mockPosts)
+  }
+
   // Save posts to localStorage whenever they change
   useEffect(() => {
+    if (typeof window === "undefined") return
     if (posts.length > 0) {
-      localStorage.setItem("moodPosts", JSON.stringify(posts))
+      try {
+        localStorage.setItem("moodPosts", JSON.stringify(posts))
+      } catch (error) {
+        console.error("Error saving posts to localStorage:", error)
+      }
     }
   }, [posts])
 
   // Save theme preference
   useEffect(() => {
-    localStorage.setItem("moodSphereTheme", isDarkMode ? "dark" : "light")
+    if (typeof window === "undefined") return
+    try {
+      localStorage.setItem("moodSphereTheme", isDarkMode ? "dark" : "light")
+    } catch (error) {
+      console.error("Error saving theme preference:", error)
+    }
   }, [isDarkMode])
 
   // Swipe handlers for post dismissal
   const handlers = useSwipeable({
     onSwiping: (e) => {
       setIsSwiping(true)
-      const postElement = e.event.target?.closest(".post-item")
+      const postElement = e.event.target?.closest(".post-item") as HTMLElement | null
       if (postElement) {
         const postWidth = postElement.offsetWidth
         const delta = Math.min(e.deltaX, 0)
@@ -858,7 +745,7 @@ const Home = () => {
     },
     onSwiped: (e) => {
       setIsSwiping(false)
-      const postElement = e.event.target?.closest(".post-item")
+      const postElement = e.event.target?.closest(".post-item") as HTMLElement | null
       if (postElement) {
         const postWidth = postElement.offsetWidth
         if (Math.abs(e.deltaX) > postWidth * 0.33) {
@@ -881,32 +768,6 @@ const Home = () => {
   const handleCreatePost = useCallback(() => {
     if (!selectedMood || !newPostMessage.trim()) return
 
-    let locationData = undefined
-
-    if (shareLocation) {
-      // In a real app, we would use the browser's geolocation API
-      // For this demo, we'll generate a location based on predefined cities
-      const cities = [
-        { name: "Sydney", lat: -33.8688, lng: 151.2093 },
-        { name: "New York", lat: 40.7128, lng: -74.006 },
-        { name: "London", lat: 51.5074, lng: -0.1278 },
-        { name: "Tokyo", lat: 35.6762, lng: 139.6503 },
-        { name: "Berlin", lat: 52.52, lng: 13.405 },
-        { name: "Paris", lat: 48.8566, lng: 2.3522 },
-        { name: "Toronto", lat: 43.6532, lng: -79.3832 },
-      ]
-
-      const randomCity = cities[Math.floor(Math.random() * cities.length)]
-      const latOffset = (Math.random() - 0.5) * 0.1
-      const lngOffset = (Math.random() - 0.5) * 0.1
-
-      locationData = {
-        lat: randomCity.lat + latOffset,
-        lng: randomCity.lng + lngOffset,
-        city: randomCity.name,
-      }
-    }
-
     const newPost: MoodPost = {
       id: uuidv4(),
       username: generateUsername(),
@@ -914,7 +775,6 @@ const Home = () => {
       message: newPostMessage.trim(),
       timestamp: Date.now(),
       expiresAt: Date.now() + 86400000, // 24 hours
-      location: locationData,
       replies: [],
       likes: 0,
     }
@@ -922,9 +782,8 @@ const Home = () => {
     setPosts((prev) => [newPost, ...prev])
     setNewPostMessage("")
     setSelectedMood(null)
-    setShareLocation(false)
     setView("feed")
-  }, [selectedMood, newPostMessage, shareLocation])
+  }, [selectedMood, newPostMessage])
 
   // Reply to a post
   const handleReply = useCallback(() => {
@@ -1032,12 +891,14 @@ const Home = () => {
           <div className="flex flex-col items-center gap-6 text-center">
             <div className="relative w-24 h-24">
               {Object.values(moodIcons).map((Icon, index) => (
-                <Icon
+                <div
                   key={index}
-                  className={`absolute inset-0 m-auto text-5xl transition-opacity duration-500 ${
+                  className={`absolute inset-0 m-auto text-3xl transition-opacity duration-500 ${
                     index === currentMood ? "opacity-100" : "opacity-0"
                   } ${Object.values(moodColors)[index]}`}
-                />
+                >
+                  <Icon />
+                </div>
               ))}
             </div>
             <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
@@ -1074,7 +935,9 @@ const Home = () => {
                     className={`p-3 rounded-xl flex flex-col items-center transition-all ${
                       selectedMood === mood
                         ? `${moodBgColors[mood as MoodType]} text-white shadow-lg`
-                        : `${isDarkMode ? "bg-gray-700 hover:bg-gray-600" : "bg-gray-100 hover:bg-gray-200"} ${moodColors[mood as MoodType]}`
+                        : `${isDarkMode ? "bg-gray-700 hover:bg-gray-600" : "bg-gray-100 hover:bg-gray-200"} ${
+                            moodColors[mood as MoodType]
+                          }`
                     }`}
                   >
                     <Icon className="text-2xl mb-1.5" />
@@ -1096,38 +959,6 @@ const Home = () => {
                 } w-full p-4 rounded-xl border focus:border-purple-300 focus:ring-2 focus:ring-purple-200 outline-none transition-all resize-none`}
                 rows={4}
               />
-
-              <div className="flex items-center">
-                <label className="flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={shareLocation}
-                    onChange={() => setShareLocation(!shareLocation)}
-                    className="sr-only"
-                  />
-                  <div
-                    className={`w-10 h-6 ${
-                      shareLocation ? "bg-purple-500" : isDarkMode ? "bg-gray-600" : "bg-gray-300"
-                    } rounded-full p-1 transition-colors duration-300 ease-in-out`}
-                  >
-                    <div
-                      className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-300 ease-in-out ${
-                        shareLocation ? "translate-x-4" : "translate-x-0"
-                      }`}
-                    ></div>
-                  </div>
-                  <span className={`ml-3 text-sm ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>
-                    Share location
-                  </span>
-                </label>
-
-                <div className="ml-auto text-sm text-gray-500">
-                  <span className={`${newPostMessage.length > 280 ? "text-red-500" : ""}`}>
-                    {newPostMessage.length}
-                  </span>
-                  /300
-                </div>
-              </div>
 
               <div className="flex gap-3">
                 <button
@@ -1192,7 +1023,10 @@ const Home = () => {
                     <div className="p-5 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
                       <div className="flex items-center gap-4 mb-4">
                         <div
-                          className={`p-2.5 rounded-xl ${bgColorClass} bg-opacity-20 border border-opacity-30 ${bgColorClass.replace("bg-", "border-")}`}
+                          className={`p-2.5 rounded-xl ${bgColorClass} bg-opacity-20 border border-opacity-30 ${bgColorClass.replace(
+                            "bg-",
+                            "border-",
+                          )}`}
                         >
                           <Icon className={`text-xl ${colorClass}`} />
                         </div>
@@ -1207,12 +1041,6 @@ const Home = () => {
                             })}
                           </p>
                         </div>
-                        {post.location && (
-                          <div className="ml-auto flex items-center text-sm text-gray-500">
-                            <FaMapMarkerAlt className="mr-1" />
-                            <span>{post.location.city || "Unknown location"}</span>
-                          </div>
-                        )}
                       </div>
 
                       <p className={`${isDarkMode ? "text-gray-200" : "text-gray-700"} text-base mb-4 pl-2`}>
@@ -1298,39 +1126,6 @@ const Home = () => {
                 )
               })
             )}
-          </div>
-        )}
-
-        {/* Map View */}
-        {view === "map" && (
-          <div className="space-y-6 animate-fadeIn">
-            <div
-              className={`p-4 rounded-xl ${
-                isDarkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
-              } border shadow-md`}
-            >
-              <h2 className={`${isDarkMode ? "text-white" : "text-gray-800"} text-xl font-bold mb-2`}>
-                Global Mood Map
-              </h2>
-              <p className={`${isDarkMode ? "text-gray-300" : "text-gray-600"} text-sm mb-4`}>
-                Explore how people are feeling around the world. Each marker represents a mood post.
-              </p>
-
-              <div className="flex flex-wrap gap-3 mb-4">
-                {Object.entries(moodIcons).map(([mood, Icon]) => (
-                  <div key={mood} className="flex items-center gap-1.5">
-                    <div className={`w-3 h-3 rounded-full ${moodBgColors[mood as MoodType]}`}></div>
-                    <span
-                      className={`text-xs font-medium ${isDarkMode ? "text-gray-300" : "text-gray-600"} capitalize`}
-                    >
-                      {mood}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <MoodMap posts={posts} isDarkMode={isDarkMode} />
           </div>
         )}
 
@@ -1443,29 +1238,6 @@ const Home = () => {
           </button>
 
           <button
-            onClick={() => setView("map")}
-            className={`p-4 flex flex-col items-center gap-1 ${
-              view === "map"
-                ? isDarkMode
-                  ? "text-purple-400"
-                  : "text-purple-600"
-                : isDarkMode
-                  ? "text-gray-400"
-                  : "text-gray-500"
-            }`}
-          >
-            <FaGlobeAmericas />
-            <span className="text-xs">Map</span>
-          </button>
-
-          <button
-            onClick={() => setView("create")}
-            className={`p-2 -mt-5 rounded-full ${isDarkMode ? "bg-purple-500" : "bg-purple-600"} text-white`}
-          >
-            <FaPlusCircle className="text-2xl" />
-          </button>
-
-          <button
             onClick={() => setView("challenges")}
             className={`p-4 flex flex-col items-center gap-1 ${
               view === "challenges"
@@ -1555,5 +1327,3 @@ const Home = () => {
     </div>
   )
 }
-
-export default Home
