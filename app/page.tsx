@@ -367,7 +367,7 @@ const HomeAssistant = () => {
                     <div className="text-2xl font-bold text-blue-500 dark:text-blue-400 min-w-[60px]">
                       {livingRoomTemp}°F
                     </div>
-                    <Slider value={livingRoomTemp} onChange={setLivingRoomTemp} className="flex-1" />
+                    <Slider value={livingRoomTemp} onChange={(value) => setLivingRoomTemp(Number(value))} className="flex-1" />
                   </div>
                 </div>
 
@@ -379,7 +379,7 @@ const HomeAssistant = () => {
                     <div className="text-2xl font-bold text-blue-500 dark:text-blue-400 min-w-[60px]">
                       {bedroomTemp}°F
                     </div>
-                    <Slider value={bedroomTemp} onChange={setBedroomTemp} className="flex-1" />
+                    <Slider value={bedroomTemp} onChange={(value) => setBedroomTemp(Number(value))} className="flex-1" />
                   </div>
                 </div>
 
@@ -502,7 +502,7 @@ const HomeAssistant = () => {
                         <X className="h-6 w-6 text-gray-400 dark:text-gray-500" />
                       </div>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
-                        No devices found matching "{searchQuery}"
+                        No devices found matching &quot;{searchQuery}&quot;
                       </p>
                     </div>
                   )}
