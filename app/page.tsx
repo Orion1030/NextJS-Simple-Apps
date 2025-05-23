@@ -39,8 +39,41 @@ interface Reply {
   message: string
   date: string
 }
-
-// Component to format dates on the client side
+const GlobalStyle = () => {
+  useEffect(() => {
+    const style = document.createElement('style')
+    style.innerHTML = `
+      button, 
+      [role="button"],
+      a,
+      .clickable,
+      input[type="submit"],
+      input[type="button"],
+      input[type="reset"],
+      select,
+      summary,
+      [tabindex]:not([tabindex="-1"]) {
+        cursor: pointer;
+      }
+      
+      input, 
+      textarea {
+        cursor: text;
+      }
+      
+      select {
+        cursor: pointer;
+      }
+    `
+    document.head.appendChild(style)
+    
+    return () => {
+      document.head.removeChild(style)
+    }
+  }, [])
+  
+  return null
+}
 const ClientDate = ({ dateString }: { dateString: string }) => {
   const [formattedDate, setFormattedDate] = useState("")
 
@@ -51,7 +84,6 @@ const ClientDate = ({ dateString }: { dateString: string }) => {
   return <span>{formattedDate}</span>
 }
 
-// Card component to display a feeling
 const FeelingCard = ({
   feeling,
   user,
@@ -112,7 +144,12 @@ const FeelingCard = ({
     grateful: isDarkMode ? "bg-emerald-600" : "bg-emerald-500",
     curious: isDarkMode ? "bg-orange-600" : "bg-orange-500",
   }
-
+  const isLikedByUser = (feeling: Feeling, userId: number | undefined) => {
+    return !!userId && !!feeling.likes.find((like) => like.userId === userId)
+  }
+  const isRepliedByUser = (feelingId: number | undefined, userId: number | undefined) => {
+    return !!feelingId && !!userId && !!replies.find((reply) => reply.userId === userId && reply.feelingId === feelingId)
+  }
   const handleActionClick = (action: string) => {
     if (!currentUser) {
       alert("Please create an account first to perform this action!")
@@ -136,6 +173,7 @@ const FeelingCard = ({
         isDarkMode ? "bg-gray-800/90" : "bg-white/90"
       } rounded-2xl p-6 shadow-lg ${categoryColors[feeling.category]} transition-all duration-300 hover:shadow-xl`}
     >
+      <GlobalStyle />
       <div className="flex items-start gap-5">
         <div
           className={`w-12 h-12 rounded-full flex items-center justify-center text-white ${
@@ -171,10 +209,18 @@ const FeelingCard = ({
               </span>
             </div>
             <div className="flex items-center gap-4">
+              
+
               <button
                 onClick={() => handleActionClick("like")}
                 className={`flex items-center gap-1 ${
-                  isDarkMode ? "text-gray-400 hover:text-rose-400" : "text-gray-500 hover:text-rose-500"
+                  isLikedByUser(feeling, currentUser?.id)
+                    ? isDarkMode
+                      ? "text-rose-400 hover:text-rose-300"
+                      : "text-rose-500 hover:text-rose-600"
+                    : isDarkMode
+                    ? "text-gray-400 hover:text-rose-400"
+                    : "text-gray-500 hover:text-rose-500"
                 } transition-colors`}
               >
                 <Heart className="w-4 h-4" />
@@ -183,7 +229,13 @@ const FeelingCard = ({
               <button
                 onClick={() => handleActionClick("reply")}
                 className={`flex items-center gap-1 ${
-                  isDarkMode ? "text-gray-400 hover:text-sky-400" : "text-gray-500 hover:text-sky-500"
+                  isRepliedByUser(feeling?.id, currentUser?.id)
+                    ? isDarkMode
+                      ? "text-rose-400 hover:text-rose-300"
+                      : "text-rose-500 hover:text-rose-600"
+                    : isDarkMode
+                    ? "text-gray-400 hover:text-rose-400"
+                    : "text-gray-500 hover:text-rose-500"
                 } transition-colors`}
               >
                 <MessageCircle className="w-4 h-4" />
@@ -298,40 +350,34 @@ const MoodWave = () => {
     )
   }
 
-  // Initialize client-side state and check for dark mode preference
   useEffect(() => {
     setIsClient(true)
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches
     setIsDarkMode(localStorage.getItem("darkMode") === "true" || prefersDark)
 
-    // Load saved user from localStorage
     const savedUser = localStorage.getItem("moodwave-user")
     if (savedUser) {
       setCurrentUser(JSON.parse(savedUser))
     }
   }, [])
 
-  // Save dark mode preference
   useEffect(() => {
     if (isClient) {
       localStorage.setItem("darkMode", isDarkMode ? "true" : "false")
     }
   }, [isDarkMode, isClient])
 
-  // Save current user to localStorage
   useEffect(() => {
     if (isClient && currentUser) {
       localStorage.setItem("moodwave-user", JSON.stringify(currentUser))
     }
   }, [currentUser, isClient])
 
-  // Fetch initial data
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true)
 
-      // Mock data for feelings
-      const feelingsData = [
+      const feelingsData: Feeling[] = [
         {
           id: 1,
           title: "Today was amazing!",
@@ -339,10 +385,10 @@ const MoodWave = () => {
           category: "happy",
           date: new Date().toISOString(),
           userId: 1,
-          likes: [ 
-            { id: 1, userId: 2 },
-            { id: 2, userId: 3 },
-          ] as Like[],
+          likes: [
+        { id: 1, userId: 2 },
+        { id: 2, userId: 3 },
+          ],
         },
         {
           id: 2,
@@ -351,8 +397,7 @@ const MoodWave = () => {
           category: "sad",
           date: new Date().toISOString(),
           userId: 2,
-          likes: [
-            { id: 3, userId: 1 },] as Like[]
+          likes: [{ id: 3, userId: 1 }],
         },
         {
           id: 3,
@@ -362,9 +407,9 @@ const MoodWave = () => {
           date: new Date().toISOString(),
           userId: 1,
           likes: [
-            { id: 4, userId: 2 },
-            { id: 5, userId: 3 },
-          ] as Like[]
+        { id: 4, userId: 2 },
+        { id: 5, userId: 3 },
+          ],
         },
         {
           id: 4,
@@ -373,7 +418,7 @@ const MoodWave = () => {
           category: "grateful",
           date: new Date().toISOString(),
           userId: 3,
-          likes: [] as Like[]
+          likes: [],
         },
         {
           id: 5,
@@ -382,7 +427,7 @@ const MoodWave = () => {
           category: "curious",
           date: new Date(Date.now() - 86400000).toISOString(),
           userId: 2,
-          likes: [] as Like[]
+          likes: [],
         },
         {
           id: 6,
@@ -391,11 +436,10 @@ const MoodWave = () => {
           category: "angry",
           date: new Date(Date.now() - 172800000).toISOString(),
           userId: 3,
-          likes: [] as Like[]
+          likes: [],
         },
       ]
 
-      // Mock data for users
       const usersData = [
         {
           id: 1,
@@ -417,7 +461,6 @@ const MoodWave = () => {
         },
       ]
 
-      // Mock data for replies
       const repliesData = [
         {
           id: 1,
@@ -459,16 +502,13 @@ const MoodWave = () => {
     fetchData()
   }, [])
 
-  // Filter feelings based on selected categories, search query, and view mode
   useEffect(() => {
     let result = [...feelings]
 
-    // Filter by categories
     if (selectedCategories.length > 0) {
       result = result.filter((feeling) => selectedCategories.includes(feeling.category))
     }
 
-    // Filter by search query
     if (searchQuery) {
       const query = searchQuery.toLowerCase()
       result = result.filter(
@@ -476,7 +516,6 @@ const MoodWave = () => {
       )
     }
 
-    // Filter by user
     if (viewMode === "user" && currentUser) {
       result = result.filter((feeling) => feeling.userId === currentUser.id)
     }
@@ -484,7 +523,6 @@ const MoodWave = () => {
     setFilteredFeelings(result)
   }, [selectedCategories, viewMode, currentUser, feelings, searchQuery])
 
-  // Handle form submission for adding a new feeling
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -503,20 +541,18 @@ const MoodWave = () => {
       category: newFeeling.category,
       date: new Date().toISOString(),
       userId: currentUser.id,
-      likes: 0,
+      likes: [],
     }
 
     setFeelings([feelingToAdd, ...feelings])
     setNewFeeling({ title: "", description: "", category: "happy" })
 
-    // Close the modal
     const modal = document.getElementById("add-feeling-modal") as HTMLDialogElement
     if (modal) modal.close()
 
     setErrorMessage(null)
   }
 
-  // Handle reply submission
   const handleReplySubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -540,14 +576,12 @@ const MoodWave = () => {
     setReplyMessage("")
     setSelectedFeeling(null)
 
-    // Close the modal
     const modal = document.getElementById("reply-modal") as HTMLDialogElement
     if (modal) modal.close()
 
     setErrorMessage(null)
   }
 
-  // Handle opening reply modal
   const handleReply = (feeling: Feeling) => {
     if (!currentUser) {
       setErrorMessage("Please create an account first to reply")
@@ -557,7 +591,6 @@ const MoodWave = () => {
     ;(document.getElementById("reply-modal") as HTMLDialogElement).showModal()
   }
 
-  // Handle view mode change
   const handleViewModeChange = (mode: "all" | "user") => {
     if (mode === "user" && !currentUser) {
       setErrorMessage("Please create an account first to view your feelings")
@@ -568,15 +601,13 @@ const MoodWave = () => {
     setErrorMessage(null)
   }
 
-  // Handle creating a new user
   const handleCreateUser = (newUser: UserProfile) => {
-    const userWithId = { ...newUser, id: Date.now() } // Use timestamp as ID
+    const userWithId = { ...newUser, id: Date.now() }
     setUsers([...users, userWithId])
     setCurrentUser(userWithId)
     setErrorMessage(null)
   }
 
-  // Handle updating user profile
   const handleUpdateProfile = (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -592,12 +623,10 @@ const MoodWave = () => {
     setCurrentUser(updatedUser)
     setUsers(users.map((user) => (user.id === currentUser.id ? updatedUser : user)))
 
-    // Close the modal
     const modal = document.getElementById("edit-profile-modal") as HTMLDialogElement
     if (modal) modal.close()
   }
 
-  // Handle opening edit profile modal
   const handleEditProfile = () => {
     if (!currentUser) return
     setEditProfile({
@@ -607,7 +636,6 @@ const MoodWave = () => {
     ;(document.getElementById("edit-profile-modal") as HTMLDialogElement).showModal()
   }
 
-  // Handle liking a feeling
   const handleLike = (like: Like) => {
     setFeelings(feelings.map((feeling) => 
     {
@@ -621,20 +649,17 @@ const MoodWave = () => {
     }))
   }
 
-  // Handle logout
-  const handleLogout = () => {
+  const handleDeleteAccount = () => {
     setCurrentUser(null)
     setViewMode("all")
     localStorage.removeItem("moodwave-user")
     setErrorMessage(null)
   }
 
-  // Handle placeholder button clicks
   const handlePlaceholderClick = (buttonName: string) => {
     alert(`${buttonName} functionality coming soon! 🚀`)
   }
 
-  // Handle action that requires authentication
   const handleAuthRequiredAction = (action: string) => {
     if (!currentUser) {
       setErrorMessage("Please create an account first to perform this action")
@@ -873,14 +898,14 @@ const MoodWave = () => {
                         <span>Edit</span>
                       </button>
                       <button
-                        onClick={handleLogout}
+                        onClick={handleDeleteAccount}
                         className={`px-3 py-2 rounded-lg ${
                           isDarkMode
                             ? "bg-rose-900/30 text-rose-300 border-rose-800 hover:bg-rose-900/50"
                             : "bg-rose-100 text-rose-700 border-rose-200 hover:bg-rose-200"
                         } border transition-all duration-300`}
                       >
-                        Logout
+                        DeleteAccount
                       </button>
                     </div>
                     <button
