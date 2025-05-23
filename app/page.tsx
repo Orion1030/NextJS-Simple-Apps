@@ -1,8 +1,10 @@
 "use client"
 import { useState, useEffect } from "react"
+import type React from "react"
+
 import { motion, AnimatePresence } from "framer-motion"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
-import { Calendar } from "lucide-react"
+import { Calendar, Leaf, Droplet, Wind, Plus, Check, X, Moon, Sun, Menu } from "lucide-react"
 
 interface Tip {
   id: number
@@ -52,9 +54,15 @@ interface NewChallenge {
   duration: string
 }
 
+interface NewHabit {
+  name: string
+  category: "zeroWaste" | "energy" | "water" | "transport"
+}
+
 interface UserInput {
   newTip: NewTip
   newChallenge: NewChallenge
+  newHabit: NewHabit
   habits: Habit[]
   selectedTips: number[]
   selectedChallenges: number[]
@@ -64,22 +72,138 @@ const initialProgress: Progress[] = [
   { date: "2024-09-01", tipsCompleted: 2, challengesCompleted: 1, carbonSaved: 120, waterSaved: 50, wasteReduced: 8 },
   { date: "2024-09-02", tipsCompleted: 5, challengesCompleted: 2, carbonSaved: 250, waterSaved: 80, wasteReduced: 15 },
   { date: "2024-09-03", tipsCompleted: 7, challengesCompleted: 3, carbonSaved: 320, waterSaved: 120, wasteReduced: 22 },
-  { date: "2024-09-04", tipsCompleted: 10, challengesCompleted: 5, carbonSaved: 450, waterSaved: 180, wasteReduced: 30 },
-  { date: "2024-09-05", tipsCompleted: 12, challengesCompleted: 6, carbonSaved: 520, waterSaved: 220, wasteReduced: 38 },
+  {
+    date: "2024-09-04",
+    tipsCompleted: 10,
+    challengesCompleted: 5,
+    carbonSaved: 450,
+    waterSaved: 180,
+    wasteReduced: 30,
+  },
+  {
+    date: "2024-09-05",
+    tipsCompleted: 12,
+    challengesCompleted: 6,
+    carbonSaved: 520,
+    waterSaved: 220,
+    wasteReduced: 38,
+  },
 ]
 
 const initialTips: Tip[] = [
-  { id: 1, title: "Switch to reusable bags", description: "Keep reusable bags handy for grocery shopping to reduce plastic waste.", category: "zeroWaste", likes: 0, author: "ecoUser" },
-  { id: 2, title: "Use energy-efficient light bulbs", description: "LED bulbs use significantly less energy and last longer than traditional incandescent bulbs.", category: "energy", likes: 0, author: "ecoUser" },
-  { id: 3, title: "Fix leaky faucets", description: "A single dripping faucet can waste up to 20 gallons of water per day. Fixing leaks helps conserve water.", category: "water", likes: 0, author: "ecoUser" },
-  { id: 4, title: "Carpool or use public transportation", description: "Reducing car usage decreases air pollution and carbon emissions. Try carpooling or taking the bus/train.", category: "transport", likes: 0, author: "ecoUser" },
+  {
+    id: 1,
+    title: "Switch to reusable bags",
+    description: "Keep reusable bags handy for grocery shopping to reduce plastic waste.",
+    category: "zeroWaste",
+    likes: 24,
+    author: "ecoUser",
+  },
+  {
+    id: 2,
+    title: "Use energy-efficient light bulbs",
+    description: "LED bulbs use significantly less energy and last longer than traditional incandescent bulbs.",
+    category: "energy",
+    likes: 18,
+    author: "greenThumb",
+  },
+  {
+    id: 3,
+    title: "Fix leaky faucets",
+    description:
+      "A single dripping faucet can waste up to 20 gallons of water per day. Fixing leaks helps conserve water.",
+    category: "water",
+    likes: 15,
+    author: "waterSaver",
+  },
+  {
+    id: 4,
+    title: "Carpool or use public transportation",
+    description:
+      "Reducing car usage decreases air pollution and carbon emissions. Try carpooling or taking the bus/train.",
+    category: "transport",
+    likes: 12,
+    author: "commuter",
+  },
+  {
+    id: 5,
+    title: "Compost food scraps",
+    description: "Composting food waste reduces landfill contributions and creates nutrient-rich soil for your garden.",
+    category: "zeroWaste",
+    likes: 32,
+    author: "gardenGuru",
+  },
+  {
+    id: 6,
+    title: "Unplug electronics when not in use",
+    description: "Even when turned off, many electronics continue to draw power. Unplug them to save energy.",
+    category: "energy",
+    likes: 9,
+    author: "powerSaver",
+  },
 ]
 
 const initialChallenges: Challenge[] = [
-  { id: 1, title: "Zero Waste Week", description: "Aim to produce zero waste for an entire week by avoiding single-use plastics and opting for reusable alternatives.", category: "zeroWaste", duration: "7 days", participants: 0, completed: 0 },
-  { id: 2, title: "Energy Conservation Challenge", description: "Reduce your energy consumption by turning off lights and unplugging devices when not in use for one week.", category: "energy", duration: "7 days", participants: 0, completed: 0 },
-  { id: 3, title: "Water Saving Challenge", description: "Take shorter showers and fix any leaks to save water for two weeks. Monitor your water usage and track your progress.", category: "water", duration: "14 days", participants: 0, completed: 0 },
-  { id: 4, title: "Sustainable Transportation Challenge", description: "Use public transportation, bike, or walk for all your trips for one week. Reduce your carbon footprint and stay healthy.", category: "transport", duration: "7 days", participants: 0, completed: 0 },
+  {
+    id: 1,
+    title: "Zero Waste Week",
+    description:
+      "Aim to produce zero waste for an entire week by avoiding single-use plastics and opting for reusable alternatives.",
+    category: "zeroWaste",
+    duration: "7 days",
+    participants: 45,
+    completed: 28,
+  },
+  {
+    id: 2,
+    title: "Energy Conservation Challenge",
+    description:
+      "Reduce your energy consumption by turning off lights and unplugging devices when not in use for one week.",
+    category: "energy",
+    duration: "7 days",
+    participants: 32,
+    completed: 19,
+  },
+  {
+    id: 3,
+    title: "Water Saving Challenge",
+    description:
+      "Take shorter showers and fix any leaks to save water for two weeks. Monitor your water usage and track your progress.",
+    category: "water",
+    duration: "14 days",
+    participants: 27,
+    completed: 12,
+  },
+  {
+    id: 4,
+    title: "Sustainable Transportation Challenge",
+    description:
+      "Use public transportation, bike, or walk for all your trips for one week. Reduce your carbon footprint and stay healthy.",
+    category: "transport",
+    duration: "7 days",
+    participants: 18,
+    completed: 9,
+  },
+  {
+    id: 5,
+    title: "Plastic-Free Month",
+    description:
+      "Eliminate all single-use plastics from your life for a month. Find sustainable alternatives for everyday items.",
+    category: "zeroWaste",
+    duration: "30 days",
+    participants: 56,
+    completed: 22,
+  },
+  {
+    id: 6,
+    title: "Local Food Challenge",
+    description:
+      "For two weeks, only eat food produced within 100 miles of your home to reduce transportation emissions.",
+    category: "transport",
+    duration: "14 days",
+    participants: 24,
+    completed: 11,
+  },
 ]
 
 const initialHabits: Habit[] = [
@@ -87,6 +211,8 @@ const initialHabits: Habit[] = [
   { id: 2, name: "Turn off lights when leaving room", category: "energy", completed: false },
   { id: 3, name: "Take 5-minute showers", category: "water", completed: false },
   { id: 4, name: "Cycle to work", category: "transport", completed: false },
+  { id: 5, name: "Use reusable water bottle", category: "zeroWaste", completed: false },
+  { id: 6, name: "Compost food scraps", category: "zeroWaste", completed: false },
 ]
 
 export default function Home() {
@@ -99,17 +225,37 @@ export default function Home() {
   const [userInput, setUserInput] = useState<UserInput>({
     newTip: { title: "", description: "", category: "zeroWaste" },
     newChallenge: { title: "", description: "", category: "zeroWaste", duration: "" },
+    newHabit: { name: "", category: "zeroWaste" },
     habits: initialHabits,
     selectedTips: [],
     selectedChallenges: [],
   })
   const [showAddTipModal, setShowAddTipModal] = useState(false)
   const [showAddChallengeModal, setShowAddChallengeModal] = useState(false)
-  const [mounted, setMounted] = useState(false)
-  const [showNavbar, setShowNavbar] = useState(false)
+  const [isDarkMode, setIsDarkMode] = useState(false)
   const [showWelcomeModal, setShowWelcomeModal] = useState(false)
   const [completedHabits, setCompletedHabits] = useState<number[]>([])
   const [showHabitModal, setShowHabitModal] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [activeTab, setActiveTab] = useState("tips")
+  const [newHabitName, setNewHabitName] = useState("")
+  const [newHabitCategory, setNewHabitCategory] = useState<"zeroWaste" | "energy" | "water" | "transport">("zeroWaste")
+
+  const handleShowAddTipModal = () => {
+    setShowAddTipModal(true)
+  }
+
+  const handleCloseAddTipModal = () => {
+    setShowAddTipModal(false)
+  }
+
+  const handleShowAddChallengeModal = () => {
+    setShowAddChallengeModal(true)
+  }
+
+  const handleCloseAddChallengeModal = () => {
+    setShowAddChallengeModal(false)
+  }
 
   const handleAddTip = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -158,6 +304,23 @@ export default function Home() {
     })
 
     setShowAddChallengeModal(false)
+  }
+
+  const handleAddHabit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+
+    if (!newHabitName.trim()) return
+
+    const newHabit: Habit = {
+      id: habits.length + 1,
+      name: newHabitName,
+      category: newHabitCategory,
+      completed: false,
+    }
+
+    setHabits([...habits, newHabit])
+    setNewHabitName("")
+    setNewHabitCategory("zeroWaste")
   }
 
   const handleLikeTip = (tipId: number) => {
@@ -218,9 +381,7 @@ export default function Home() {
   }
 
   const handleSetCompletedHabits = (habitId: number) => {
-    setCompletedHabits((prev) =>
-      prev.includes(habitId) ? prev.filter((id) => id !== habitId) : [...prev, habitId],
-    )
+    setCompletedHabits((prev) => (prev.includes(habitId) ? prev.filter((id) => id !== habitId) : [...prev, habitId]))
   }
 
   const handleResetHabits = () => {
@@ -230,40 +391,27 @@ export default function Home() {
     setCompletedHabits([])
   }
 
-  const handleShowAddTipModal = () => {
-    setShowAddTipModal(true)
+  const handleDeleteHabit = (habitId: number) => {
+    setHabits(habits.filter((habit) => habit.id !== habitId))
   }
 
-  const handleShowAddChallengeModal = () => {
-    setShowAddChallengeModal(true)
-  }
-
-  const handleCloseAddTipModal = () => {
-    setShowAddTipModal(false)
-  }
-
-  const handleCloseAddChallengeModal = () => {
-    setShowAddChallengeModal(false)
+  const toggleDarkMode = () => {
+    setIsDarkMode(!isDarkMode)
+    if (typeof document !== "undefined") {
+      document.documentElement.classList.toggle("dark")
+    }
   }
 
   useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 50) {
-        setShowNavbar(true)
-      } else {
-        setShowNavbar(false)
-      }
+    // Check for user's preferred color scheme
+    if (
+      typeof window !== "undefined" &&
+      window.matchMedia &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches
+    ) {
+      setIsDarkMode(true)
+      document.documentElement.classList.add("dark")
     }
-
-    window.addEventListener("scroll", handleScroll)
-
-    return () => {
-      window.removeEventListener("scroll", handleScroll)
-    }
-  }, [])
-
-  useEffect(() => {
-    setMounted(true)
 
     const hasSeenWelcomeModal = localStorage.getItem("hasSeenWelcomeModal")
 
@@ -278,6 +426,7 @@ export default function Home() {
       if (e.key === "Escape") {
         setShowAddTipModal(false)
         setShowAddChallengeModal(false)
+        setShowHabitModal(false)
       }
     }
 
@@ -316,108 +465,119 @@ export default function Home() {
     return null
   }
 
+  const getCategoryIcon = (category: string) => {
+    switch (category) {
+      case "zeroWaste":
+        return <Leaf className="h-4 w-4" />
+      case "energy":
+        return <Wind className="h-4 w-4" />
+      case "water":
+        return <Droplet className="h-4 w-4" />
+      case "transport":
+        return <Calendar className="h-4 w-4" />
+      default:
+        return <Leaf className="h-4 w-4" />
+    }
+  }
+
   return (
-    <div className={`min-h-screen transition-colors duration-300 ${mounted ? "bg-gray-50 dark:bg-gray-900" : ""}`}>
-      <AnimatePresence>
-        {showNavbar && (
-          <motion.nav
-            initial={{ y: -100 }}
-            animate={{ y: 0 }}
-            exit={{ y: -100 }}
-            transition={{ duration: 0.3 }}
-            className="sticky top-0 z-50 w-full bg-green-600 dark:bg-green-800 shadow-lg"
-          >
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="flex items-center justify-between h-16">
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.5 }}
-                  className="flex items-center"
-                >
-                  <div className="flex-shrink-0">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-8 w-8 text-white"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                  </div>
-                  <div className="hidden md:block">
-                    <div className="ml-10 flex items-baseline space-x-4">
-                      <a
-                        href="#home"
-                        className="text-white hover:bg-green-700 dark:hover:bg-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150"
-                      >
-                        Home
-                      </a>
-                      <a
-                        href="#about"
-                        className="text-white hover:bg-green-700 dark:hover:bg-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150"
-                      >
-                        About
-                      </a>
-                      <a
-                        href="#features"
-                        className="text-white hover:bg-green-700 dark:hover:bg-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150"
-                      >
-                        Features
-                      </a>
-                      <a
-                        href="#contact"
-                        className="text-white hover:bg-green-700 dark:hover:bg-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150"
-                      >
-                        Contact
-                      </a>
-                    </div>
-                  </div>
-                </motion.div>
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.5 }}
-                  className="flex items-center"
-                >
-                  <div className="ml-4 flex items-center md:ml-6">
-                    <button
-                      type="button"
-                      className="bg-green-700 dark:bg-green-800 hover:bg-green-600 dark:hover:bg-green-700 p-1 rounded-full text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white transition-colors duration-150"
-                      onClick={() => {
-                        const newTheme = mounted ? (document.documentElement.classList.contains("dark") ? "" : "dark") : ""
-                        document.documentElement.classList.toggle("dark", newTheme === "dark")
-                      }}
-                    >
-                      <span className="sr-only">Toggle dark mode</span>
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-6 w-6"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                </motion.div>
+    <div className={`min-h-screen transition-colors duration-300 ${isDarkMode ? "dark bg-gray-900" : "bg-gray-50"}`}>
+      {/* Sticky Header */}
+      <header className="sticky top-0 z-50 w-full bg-green-600 dark:bg-green-800 shadow-lg">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center">
+              <div className="flex-shrink-0 flex items-center">
+                <Leaf className="h-8 w-8 text-white mr-2" />
+                <span className="text-white font-bold text-xl">EcoLife</span>
+              </div>
+              <div className="hidden md:block">
+                <div className="ml-10 flex items-baseline space-x-4">
+                  <a
+                    href="#home"
+                    className="text-white hover:bg-green-700 dark:hover:bg-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150"
+                  >
+                    Home
+                  </a>
+                  <a
+                    href="#tips"
+                    className="text-white hover:bg-green-700 dark:hover:bg-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150"
+                  >
+                    Eco Tips
+                  </a>
+                  <a
+                    href="#challenges"
+                    className="text-white hover:bg-green-700 dark:hover:bg-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150"
+                  >
+                    Challenges
+                  </a>
+                  <a
+                    href="#habits"
+                    className="text-white hover:bg-green-700 dark:hover:bg-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150"
+                  >
+                    Habits
+                  </a>
+                </div>
               </div>
             </div>
-          </motion.nav>
-        )}
-      </AnimatePresence>
+            <div className="flex items-center">
+              <button
+                type="button"
+                className="bg-green-700 dark:bg-green-800 hover:bg-green-600 dark:hover:bg-green-700 p-1 rounded-full text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white transition-colors duration-150 mr-2"
+                onClick={toggleDarkMode}
+              >
+                <span className="sr-only">Toggle dark mode</span>
+                {isDarkMode ? <Sun className="h-6 w-6" /> : <Moon className="h-6 w-6" />}
+              </button>
+              <div className="md:hidden">
+                <button
+                  type="button"
+                  className="bg-green-700 dark:bg-green-800 hover:bg-green-600 dark:hover:bg-green-700 p-1 rounded-full text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white transition-colors duration-150"
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                >
+                  <Menu className="h-6 w-6" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Mobile menu */}
+          {mobileMenuOpen && (
+            <div className="md:hidden">
+              <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-green-500 dark:bg-green-700 rounded-b-lg">
+                <a
+                  href="#home"
+                  className="text-white block px-3 py-2 rounded-md text-base font-medium hover:bg-green-600 dark:hover:bg-green-600"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Home
+                </a>
+                <a
+                  href="#tips"
+                  className="text-white block px-3 py-2 rounded-md text-base font-medium hover:bg-green-600 dark:hover:bg-green-600"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Eco Tips
+                </a>
+                <a
+                  href="#challenges"
+                  className="text-white block px-3 py-2 rounded-md text-base font-medium hover:bg-green-600 dark:hover:bg-green-600"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Challenges
+                </a>
+                <a
+                  href="#habits"
+                  className="text-white block px-3 py-2 rounded-md text-base font-medium hover:bg-green-600 dark:hover:bg-green-600"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Habits
+                </a>
+              </div>
+            </div>
+          )}
+        </div>
+      </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <AnimatePresence>
@@ -449,6 +609,20 @@ export default function Home() {
         </AnimatePresence>
 
         <section className="mb-12" id="home">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="text-center mb-10"
+          >
+            <h1 className="text-4xl md:text-5xl font-bold text-green-600 dark:text-green-400 mb-4">
+              Live Sustainably with EcoLife
+            </h1>
+            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
+              Track your eco-friendly habits, join challenges, and share tips to make a positive impact on our planet.
+            </p>
+          </motion.div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
             <motion.div
               initial={{ opacity: 0, x: -50 }}
@@ -464,20 +638,7 @@ export default function Home() {
                     <p className="text-3xl font-bold text-green-600 dark:text-green-400">{totalCarbonSaved} kg</p>
                   </div>
                   <div className="bg-green-100 dark:bg-green-900 p-3 rounded-full">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-6 w-6 text-green-600 dark:text-green-400"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
+                    <Leaf className="h-6 w-6 text-green-600 dark:text-green-400" />
                   </div>
                 </div>
                 <div className="flex justify-between items-center">
@@ -486,20 +647,7 @@ export default function Home() {
                     <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{totalWaterSaved} L</p>
                   </div>
                   <div className="bg-blue-100 dark:bg-blue-900 p-3 rounded-full">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-6 w-6 text-blue-600 dark:text-blue-400"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
-                      />
-                    </svg>
+                    <Droplet className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                   </div>
                 </div>
                 <div className="flex justify-between items-center">
@@ -508,27 +656,15 @@ export default function Home() {
                     <p className="text-3xl font-bold text-gray-600 dark:text-gray-400">{totalWasteReduced} kg</p>
                   </div>
                   <div className="bg-gray-100 dark:bg-gray-700 p-3 rounded-full">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-6 w-6 text-gray-600 dark:text-gray-400"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                      />
-                    </svg>
+                    <Wind className="h-6 w-6 text-gray-600 dark:text-gray-400" />
                   </div>
                 </div>
               </div>
               <button
                 onClick={() => setShowHabitModal(true)}
-                className="mt-8 bg-green-600 dark:bg-green-500 hover:bg-green-700 dark:hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition-colors duration-150 w-full"
+                className="mt-8 bg-green-600 dark:bg-green-500 hover:bg-green-700 dark:hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg transition-colors duration-150 w-full flex items-center justify-center"
               >
+                <Calendar className="h-5 w-5 mr-2" />
                 Track Your Habits
               </button>
             </motion.div>
@@ -581,24 +717,16 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="mb-12">
+        <section className="mb-12" id="tips">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-3xl font-bold text-green-600 dark:text-green-400">Eco Tips</h2>
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={handleShowAddTipModal}
-              className="bg-green-600 dark:bg-green-500 hover:bg-green-700 dark:hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition-colors duration-150 flex items-center"
+              className="bg-green-600 dark:bg-green-500 hover:bg-green-700 dark:hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-150 flex items-center"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5 mr-2"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
+              <Plus className="h-5 w-5 mr-2" />
               Add Tip
             </motion.button>
           </div>
@@ -624,7 +752,7 @@ export default function Home() {
                   <h3 className="text-xl font-bold text-gray-900 dark:text-white">{tip.title}</h3>
                   <div className="flex items-center">
                     <span
-                      className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                      className={`px-2 py-1 rounded-full text-xs font-semibold flex items-center ${
                         tip.category === "zeroWaste"
                           ? "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300"
                           : tip.category === "energy"
@@ -634,7 +762,8 @@ export default function Home() {
                               : "bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-300"
                       }`}
                     >
-                      {tip.category.charAt(0).toUpperCase() + tip.category.slice(1)}
+                      {getCategoryIcon(tip.category)}
+                      <span className="ml-1">{tip.category.charAt(0).toUpperCase() + tip.category.slice(1)}</span>
                     </span>
                   </div>
                 </div>
@@ -667,24 +796,16 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="mb-12">
+        <section className="mb-12" id="challenges">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-3xl font-bold text-green-600 dark:text-green-400">Eco Challenges</h2>
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={handleShowAddChallengeModal}
-              className="bg-green-600 dark:bg-green-500 hover:bg-green-700 dark:hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition-colors duration-150 flex items-center"
+              className="bg-green-600 dark:bg-green-500 hover:bg-green-700 dark:hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-150 flex items-center"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5 mr-2"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
+              <Plus className="h-5 w-5 mr-2" />
               Add Challenge
             </motion.button>
           </div>
@@ -710,7 +831,7 @@ export default function Home() {
                   <h3 className="text-xl font-bold text-gray-900 dark:text-white">{challenge.title}</h3>
                   <div className="flex items-center">
                     <span
-                      className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                      className={`px-2 py-1 rounded-full text-xs font-semibold flex items-center ${
                         challenge.category === "zeroWaste"
                           ? "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300"
                           : challenge.category === "energy"
@@ -720,32 +841,53 @@ export default function Home() {
                               : "bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-300"
                       }`}
                     >
-                      {challenge.category.charAt(0).toUpperCase() + challenge.category.slice(1)}
+                      {getCategoryIcon(challenge.category)}
+                      <span className="ml-1">
+                        {challenge.category.charAt(0).toUpperCase() + challenge.category.slice(1)}
+                      </span>
                     </span>
                   </div>
                 </div>
                 <p className="text-gray-700 dark:text-gray-300 mb-2">{challenge.description}</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Duration: {challenge.duration}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 flex items-center">
+                  <Calendar className="h-4 w-4 mr-1" />
+                  Duration: {challenge.duration}
+                </p>
+                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 mb-4">
+                  <div
+                    className="bg-green-600 dark:bg-green-400 h-2.5 rounded-full transition-all duration-500 ease-in-out"
+                    style={{ width: `${(challenge.completed / (challenge.participants || 1)) * 100}%` }}
+                  ></div>
+                </div>
                 <div className="flex justify-between items-center mt-4">
                   <div className="flex items-center">
                     <div className="flex -space-x-2 mr-3">
-                      {Array(Math.min(5, challenge.participants))
+                      {Array(Math.min(3, challenge.participants))
                         .fill(0)
                         .map((_, i) => (
-                          <div key={i} className="w-8 h-8 rounded-full bg-green-200 dark:bg-green-800 flex items-center justify-center text-xs font-bold text-green-800 dark:text-green-200">
+                          <div
+                            key={i}
+                            className="w-8 h-8 rounded-full bg-green-200 dark:bg-green-800 flex items-center justify-center text-xs font-bold text-green-800 dark:text-green-200 border-2 border-white dark:border-gray-800"
+                          >
                             {String.fromCharCode(65 + i)}
                           </div>
                         ))}
+                      {challenge.participants > 3 && (
+                        <div className="w-8 h-8 rounded-full bg-green-200 dark:bg-green-800 flex items-center justify-center text-xs font-bold text-green-800 dark:text-green-200 border-2 border-white dark:border-gray-800">
+                          +{challenge.participants - 3}
+                        </div>
+                      )}
                     </div>
-                    <span className="text-sm text-gray-500 dark:text-gray-400">{challenge.participants} participants</span>
+                    <span className="text-sm text-gray-500 dark:text-gray-400">{challenge.participants} joined</span>
                   </div>
                   {selectedChallenges.includes(challenge.id) ? (
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={() => handleCompleteChallenge(challenge.id)}
-                      className="bg-green-600 dark:bg-green-500 hover:bg-green-700 dark:hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition-colors duration-150 text-sm"
+                      className="bg-green-600 dark:bg-green-500 hover:bg-green-700 dark:hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-150 text-sm flex items-center"
                     >
+                      <Check className="h-4 w-4 mr-1" />
                       Complete
                     </motion.button>
                   ) : (
@@ -753,11 +895,75 @@ export default function Home() {
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={() => handleJoinChallenge(challenge.id)}
-                      className="bg-green-600 dark:bg-green-500 hover:bg-green-700 dark:hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition-colors duration-150 text-sm"
+                      className="bg-green-600 dark:bg-green-500 hover:bg-green-700 dark:hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-150 text-sm"
                     >
                       Join
                     </motion.button>
                   )}
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </section>
+
+        <section className="mb-12" id="habits">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-3xl font-bold text-green-600 dark:text-green-400">Track Your Habits</h2>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setShowHabitModal(true)}
+              className="bg-green-600 dark:bg-green-500 hover:bg-green-700 dark:hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-150 flex items-center"
+            >
+              <Plus className="h-5 w-5 mr-2" />
+              Manage Habits
+            </motion.button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {habits.map((habit) => (
+              <motion.div
+                key={habit.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                whileHover={{ y: -5 }}
+                className={`bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border-l-4 ${
+                  habit.completed ? "border-green-500 dark:border-green-600" : "border-gray-200 dark:border-gray-700"
+                }`}
+              >
+                <div className="flex justify-between items-start mb-4">
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white">{habit.name}</h3>
+                  <div className="flex items-center">
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-semibold flex items-center ${
+                        habit.completed
+                          ? "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300"
+                          : "bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-300"
+                      }`}
+                    >
+                      {habit.completed ? <Check className="h-3 w-3 mr-1" /> : null}
+                      {habit.completed ? "Completed" : "Pending"}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex justify-between items-center mt-4">
+                  <span
+                    className={`text-sm font-semibold flex items-center ${
+                      habit.completed ? "text-green-600 dark:text-green-400" : "text-gray-500 dark:text-gray-400"
+                    }`}
+                  >
+                    {getCategoryIcon(habit.category)}
+                    <span className="ml-1">{habit.category.charAt(0).toUpperCase() + habit.category.slice(1)}</span>
+                  </span>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={habit.completed}
+                      onChange={() => handleSetHabits(habit.id)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-green-600"></div>
+                  </label>
                 </div>
               </motion.div>
             ))}
@@ -778,15 +984,7 @@ export default function Home() {
                 {progress.slice(-3).map((item, index) => (
                   <div key={index} className="flex items-center">
                     <div className="bg-green-100 dark:bg-green-900 p-2 rounded-full mr-4">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-5 w-5 text-green-600 dark:text-green-400"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
+                      <Check className="h-5 w-5 text-green-600 dark:text-green-400" />
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-gray-900 dark:text-white">
@@ -842,115 +1040,6 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="mb-12">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-3xl font-bold text-green-600 dark:text-green-400">Track Your Habits</h2>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setShowHabitModal(true)}
-              className="bg-green-600 dark:bg-green-500 hover:bg-green-700 dark:hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition-colors duration-150 flex items-center"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5 mr-2"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              Add Habit
-            </motion.button>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {habits.map((habit) => (
-              <motion.div
-                key={habit.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-                whileHover={{ y: -5 }}
-                className={`bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border-l-4 ${
-                  habit.completed ? "border-green-500 dark:border-green-600" : "border-gray-200 dark:border-gray-700"
-                }`}
-              >
-                <div className="flex justify-between items-start mb-4">
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-white">{habit.name}</h3>
-                  <div className="flex items-center">
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                        habit.completed
-                          ? "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300"
-                          : "bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-300"
-                      }`}
-                    >
-                      {habit.completed ? "Completed" : "Pending"}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex justify-between items-center mt-4">
-                  <span
-                    className={`text-sm font-semibold ${
-                      habit.completed ? "text-green-600 dark:text-green-400" : "text-gray-500 dark:text-gray-400"
-                    }`}
-                  >
-                    {habit.category.charAt(0).toUpperCase() + habit.category.slice(1)}
-                  </span>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={habit.completed}
-                      onChange={() => handleSetHabits(habit.id)}
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-green-600"></div>
-                  </label>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </section>
-
-        <section className="mb-12">
-          <h2 className="text-3xl font-bold text-green-600 dark:text-green-400 mb-6">Eco Challenges Progress</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {challenges.map((challenge) => (
-              <motion.div
-                key={challenge.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-                whileHover={{ y: -5 }}
-                className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg"
-              >
-                <div className="flex justify-between items-start mb-4">
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-white">{challenge.title}</h3>
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                      challenge.completed > 0
-                        ? "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300"
-                        : "bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-300"
-                    }`}
-                  >
-                    {challenge.completed > 0 ? "Completed" : "Pending"}
-                  </span>
-                </div>
-                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 mb-4">
-                  <div
-                    className="bg-green-600 dark:bg-green-400 h-2.5 rounded-full transition-all duration-500 ease-in-out"
-                    style={{ width: `${(challenge.completed / (challenge.participants || 1)) * 100}%` }}
-                  ></div>
-                </div>
-                <div className="flex justify-between items-center text-sm text-gray-500 dark:text-gray-400">
-                  <span>{challenge.participants} participants</span>
-                  <span>{challenge.completed} completed</span>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </section>
-
         <AnimatePresence>
           {showAddTipModal && (
             <motion.div
@@ -959,6 +1048,11 @@ export default function Home() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
               className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+              onClick={(e) => {
+                if (e.target === e.currentTarget) {
+                  setShowAddTipModal(false)
+                }
+              }}
             >
               <motion.div
                 initial={{ scale: 0.9, y: 20 }}
@@ -966,8 +1060,17 @@ export default function Home() {
                 exit={{ scale: 0.9, y: 20 }}
                 transition={{ duration: 0.3 }}
                 className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full"
+                onClick={(e) => e.stopPropagation()}
               >
-                <h2 className="text-2xl font-bold text-green-600 dark:text-green-400 mb-4">Add New Eco Tip</h2>
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-2xl font-bold text-green-600 dark:text-green-400">Add New Eco Tip</h2>
+                  <button
+                    onClick={handleCloseAddTipModal}
+                    className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
                 <form onSubmit={handleAddTip} className="space-y-4">
                   <div>
                     <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -977,13 +1080,18 @@ export default function Home() {
                       type="text"
                       id="title"
                       value={userInput.newTip.title}
-                      onChange={(e) => setUserInput({ ...userInput, newTip: { ...userInput.newTip, title: e.target.value } })}
+                      onChange={(e) =>
+                        setUserInput({ ...userInput, newTip: { ...userInput.newTip, title: e.target.value } })
+                      }
                       className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:outline-none transition-all duration-150"
                       required
                     />
                   </div>
                   <div>
-                    <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label
+                      htmlFor="description"
+                      className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                    >
                       Description
                     </label>
                     <textarea
@@ -998,13 +1106,24 @@ export default function Home() {
                     />
                   </div>
                   <div>
-                    <label htmlFor="category" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label
+                      htmlFor="category"
+                      className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                    >
                       Category
                     </label>
                     <select
                       id="category"
                       value={userInput.newTip.category}
-                      onChange={(e) => setUserInput({ ...userInput, newTip: { ...userInput.newTip, category: e.target.value } })}
+                      onChange={(e) =>
+                        setUserInput({
+                          ...userInput,
+                          newTip: {
+                            ...userInput.newTip,
+                            category: e.target.value as "zeroWaste" | "energy" | "water" | "transport",
+                          },
+                        })
+                      }
                       className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:outline-none transition-all duration-150"
                     >
                       <option value="zeroWaste">Zero Waste</option>
@@ -1046,6 +1165,11 @@ export default function Home() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
               className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+              onClick={(e) => {
+                if (e.target === e.currentTarget) {
+                  setShowAddChallengeModal(false)
+                }
+              }}
             >
               <motion.div
                 initial={{ scale: 0.9, y: 20 }}
@@ -1053,11 +1177,23 @@ export default function Home() {
                 exit={{ scale: 0.9, y: 20 }}
                 transition={{ duration: 0.3 }}
                 className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full"
+                onClick={(e) => e.stopPropagation()}
               >
-                <h2 className="text-2xl font-bold text-green-600 dark:text-green-400 mb-4">Add New Eco Challenge</h2>
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-2xl font-bold text-green-600 dark:text-green-400">Add New Eco Challenge</h2>
+                  <button
+                    onClick={handleCloseAddChallengeModal}
+                    className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
                 <form onSubmit={handleAddChallenge} className="space-y-4">
                   <div>
-                    <label htmlFor="challengeTitle" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label
+                      htmlFor="challengeTitle"
+                      className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                    >
                       Title
                     </label>
                     <input
@@ -1065,14 +1201,20 @@ export default function Home() {
                       id="challengeTitle"
                       value={userInput.newChallenge.title}
                       onChange={(e) =>
-                        setUserInput({ ...userInput, newChallenge: { ...userInput.newChallenge, title: e.target.value } })
+                        setUserInput({
+                          ...userInput,
+                          newChallenge: { ...userInput.newChallenge, title: e.target.value },
+                        })
                       }
                       className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:outline-none transition-all duration-150"
                       required
                     />
                   </div>
                   <div>
-                    <label htmlFor="challengeDescription" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label
+                      htmlFor="challengeDescription"
+                      className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                    >
                       Description
                     </label>
                     <textarea
@@ -1090,7 +1232,10 @@ export default function Home() {
                     />
                   </div>
                   <div>
-                    <label htmlFor="challengeCategory" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label
+                      htmlFor="challengeCategory"
+                      className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                    >
                       Category
                     </label>
                     <select
@@ -1099,7 +1244,10 @@ export default function Home() {
                       onChange={(e) =>
                         setUserInput({
                           ...userInput,
-                          newChallenge: { ...userInput.newChallenge, category: e.target.value },
+                          newChallenge: {
+                            ...userInput.newChallenge,
+                            category: e.target.value as "zeroWaste" | "energy" | "water" | "transport",
+                          },
                         })
                       }
                       className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:outline-none transition-all duration-150"
@@ -1111,7 +1259,10 @@ export default function Home() {
                     </select>
                   </div>
                   <div>
-                    <label htmlFor="challengeDuration" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label
+                      htmlFor="challengeDuration"
+                      className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                    >
                       Duration
                     </label>
                     <input
@@ -1119,7 +1270,10 @@ export default function Home() {
                       id="challengeDuration"
                       value={userInput.newChallenge.duration}
                       onChange={(e) =>
-                        setUserInput({ ...userInput, newChallenge: { ...userInput.newChallenge, duration: e.target.value } })
+                        setUserInput({
+                          ...userInput,
+                          newChallenge: { ...userInput.newChallenge, duration: e.target.value },
+                        })
                       }
                       className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:outline-none transition-all duration-150"
                       placeholder="e.g., 7 days"
@@ -1159,6 +1313,11 @@ export default function Home() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
               className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+              onClick={(e) => {
+                if (e.target === e.currentTarget) {
+                  setShowHabitModal(false)
+                }
+              }}
             >
               <motion.div
                 initial={{ scale: 0.9, y: 20 }}
@@ -1166,32 +1325,52 @@ export default function Home() {
                 exit={{ scale: 0.9, y: 20 }}
                 transition={{ duration: 0.3 }}
                 className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full"
+                onClick={(e) => e.stopPropagation()}
               >
-                <h2 className="text-2xl font-bold text-green-600 dark:text-green-400 mb-4">Track Your Habits</h2>
-                <div className="mb-4 flex items-center">
-                  <input
-                    type="text"
-                    placeholder="New habit name"
-                    value={""}
-                    className="flex-grow px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-l-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:outline-none transition-all duration-150"
-                  />
-                  <select
-                    value={""}
-                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:outline-none transition-all duration-150"
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-2xl font-bold text-green-600 dark:text-green-400">Track Your Habits</h2>
+                  <button
+                    onClick={() => setShowHabitModal(false)}
+                    className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                   >
-                    <option value="zeroWaste">Zero Waste</option>
-                    <option value="energy">Energy</option>
-                    <option value="water">Water</option>
-                    <option value="transport">Transport</option>
-                  </select>
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="ml-2 px-4 py-2 bg-green-600 dark:bg-green-500 hover:bg-green-700 dark:hover:bg-green-600 text-white rounded-r-lg transition-colors duration-150"
-                  >
-                    Add
-                  </motion.button>
+                    <X className="h-5 w-5" />
+                  </button>
                 </div>
+
+                <form onSubmit={handleAddHabit} className="mb-4">
+                  <div className="flex flex-col md:flex-row gap-2">
+                    <input
+                      type="text"
+                      placeholder="New habit name"
+                      value={newHabitName}
+                      onChange={(e) => setNewHabitName(e.target.value)}
+                      className="flex-grow px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:outline-none transition-all duration-150"
+                    />
+                    <div className="flex">
+                      <select
+                        value={newHabitCategory}
+                        onChange={(e) =>
+                          setNewHabitCategory(e.target.value as "zeroWaste" | "energy" | "water" | "transport")
+                        }
+                        className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-l-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:outline-none transition-all duration-150"
+                      >
+                        <option value="zeroWaste">Zero Waste</option>
+                        <option value="energy">Energy</option>
+                        <option value="water">Water</option>
+                        <option value="transport">Transport</option>
+                      </select>
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        type="submit"
+                        className="px-4 py-2 bg-green-600 dark:bg-green-500 hover:bg-green-700 dark:hover:bg-green-600 text-white rounded-r-lg transition-colors duration-150"
+                      >
+                        <Plus className="h-5 w-5" />
+                      </motion.button>
+                    </div>
+                  </div>
+                </form>
+
                 <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
                   {habits.map((habit) => (
                     <div
@@ -1205,15 +1384,7 @@ export default function Home() {
                           } flex items-center justify-center mr-3`}
                         >
                           {habit.completed ? (
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              className="h-5 w-5 text-green-600 dark:text-green-400"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
+                            <Check className="h-5 w-5 text-green-600 dark:text-green-400" />
                           ) : (
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
@@ -1253,11 +1424,17 @@ export default function Home() {
                           <input
                             type="checkbox"
                             checked={habit.completed}
-                            onChange={() => handleSetCompletedHabits(habit.id)}
+                            onChange={() => handleSetHabits(habit.id)}
                             className="sr-only peer"
                           />
                           <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-green-600"></div>
                         </label>
+                        <button
+                          onClick={() => handleDeleteHabit(habit.id)}
+                          className="ml-2 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                        >
+                          <X className="h-5 w-5" />
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -1269,7 +1446,7 @@ export default function Home() {
                     onClick={handleResetHabits}
                     className="text-sm text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 transition-colors duration-150"
                   >
-                    Reset Habits
+                    Reset All Habits
                   </motion.button>
                   <motion.button
                     whileHover={{ scale: 1.05 }}
@@ -1286,18 +1463,66 @@ export default function Home() {
         </AnimatePresence>
       </main>
 
-      <footer className="bg-green-600 dark:bg-green-800 text-white py-6 mt-12">
+      <footer className="bg-green-600 dark:bg-green-800 text-white py-8 mt-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row items-center justify-between">
-            <div className="mb-6 md:mb-0">
-              <h2 className="text-2xl font-bold">EcoLife</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div>
+              <h2 className="text-2xl font-bold flex items-center">
+                <Leaf className="h-6 w-6 mr-2" />
+                EcoLife
+              </h2>
               <p className="text-green-100 dark:text-green-300 text-sm mt-2 max-w-md">
                 Join our community in making a difference. Track your habits, complete eco-challenges, and share tips to
                 live a more sustainable life.
               </p>
             </div>
             <div>
-              <p className="text-sm text-green-100 dark:text-green-300">© {new Date().getFullYear()} EcoLife. All rights reserved.</p>
+              <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
+              <ul className="space-y-2">
+                <li>
+                  <a href="#home" className="text-green-100 hover:text-white transition-colors duration-150">
+                    Home
+                  </a>
+                </li>
+                <li>
+                  <a href="#tips" className="text-green-100 hover:text-white transition-colors duration-150">
+                    Eco Tips
+                  </a>
+                </li>
+                <li>
+                  <a href="#challenges" className="text-green-100 hover:text-white transition-colors duration-150">
+                    Challenges
+                  </a>
+                </li>
+                <li>
+                  <a href="#habits" className="text-green-100 hover:text-white transition-colors duration-150">
+                    Habits
+                  </a>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Connect With Us</h3>
+              <div className="flex space-x-4">
+                <a href="#" className="text-green-100 hover:text-white transition-colors duration-150">
+                  <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z" />
+                  </svg>
+                </a>
+                <a href="#" className="text-green-100 hover:text-white transition-colors duration-150">
+                  <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+                  </svg>
+                </a>
+                <a href="#" className="text-green-100 hover:text-white transition-colors duration-150">
+                  <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M22.675 0h-21.35c-.732 0-1.325.593-1.325 1.325v21.351c0 .731.593 1.324 1.325 1.324h11.495v-9.294h-3.128v-3.622h3.128v-2.671c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.795.143v3.24l-1.918.001c-1.504 0-1.795.715-1.795 1.763v2.313h3.587l-.467 3.622h-3.12v9.293h6.116c.73 0 1.323-.593 1.323-1.325v-21.35c0-.732-.593-1.325-1.325-1.325z" />
+                  </svg>
+                </a>
+              </div>
+              <p className="text-sm text-green-100 dark:text-green-300 mt-4">
+                © {new Date().getFullYear()} EcoLife. All rights reserved.
+              </p>
             </div>
           </div>
         </div>
@@ -1308,18 +1533,15 @@ export default function Home() {
 
 // Zod Schema
 export const Schema = {
-    "commentary": "This is a simple app that helps people live more eco-friendly lives. It has a section for users to share green tips and guides, and another for eco challenges to motivate users to adopt sustainable habits. Users can track their environmental impact and share their progress with the community.",
-    "template": "nextjs-developer",
-    "title": "Eco Life",
-    "description": "A simple app to help people live more eco-friendly lives.",
-    "additional_dependencies": [
-        "framer-motion",
-        "recharts",
-        "lucide-react"
-    ],
-    "has_additional_dependencies": true,
-    "install_dependencies_command": "npm install framer-motion recharts lucide-react",
-    "port": 3000,
-    "file_path": "pages/index.tsx",
-    "code": "<see code above>"
+  commentary:
+    "This is a simple app that helps people live more eco-friendly lives. It has a section for users to share green tips and guides, and another for eco challenges to motivate users to adopt sustainable habits. Users can track their environmental impact and share their progress with the community.",
+  template: "nextjs-developer",
+  title: "Eco Life",
+  description: "A simple app to help people live more eco-friendly lives.",
+  additional_dependencies: ["framer-motion", "recharts", "lucide-react"],
+  has_additional_dependencies: true,
+  install_dependencies_command: "npm install framer-motion recharts lucide-react",
+  port: 3000,
+  file_path: "pages/index.tsx",
+  code: "<see code above>",
 }
