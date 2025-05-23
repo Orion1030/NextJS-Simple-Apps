@@ -468,15 +468,15 @@ export default function Home() {
   const getCategoryIcon = (category: string) => {
     switch (category) {
       case "zeroWaste":
-        return <Leaf className="h-4 w-4" />
+        return <Leaf className="h-4 w-4" aria-hidden="true" />
       case "energy":
-        return <Wind className="h-4 w-4" />
+        return <Wind className="h-4 w-4" aria-hidden="true" />
       case "water":
-        return <Droplet className="h-4 w-4" />
+        return <Droplet className="h-4 w-4" aria-hidden="true" />
       case "transport":
-        return <Calendar className="h-4 w-4" />
+        return <Calendar className="h-4 w-4" aria-hidden="true" />
       default:
-        return <Leaf className="h-4 w-4" />
+        return <Leaf className="h-4 w-4" aria-hidden="true" />
     }
   }
 
@@ -673,7 +673,7 @@ export default function Home() {
               initial={{ opacity: 0, x: 50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5 }}
-              className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-lg"
+              className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-lg h-full"
             >
               <h2 className="text-3xl font-bold text-green-600 dark:text-green-400 mb-6">Progress Overview</h2>
               <div className="h-64">
@@ -1338,21 +1338,21 @@ export default function Home() {
                 </div>
 
                 <form onSubmit={handleAddHabit} className="mb-4">
-                  <div className="flex flex-col md:flex-row gap-2">
+                  <div className="flex flex-col gap-4">
                     <input
                       type="text"
-                      placeholder="New habit name"
+                      placeholder="Enter habit name"
                       value={newHabitName}
                       onChange={(e) => setNewHabitName(e.target.value)}
-                      className="flex-grow px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:outline-none transition-all duration-150"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:outline-none transition-colors duration-150"
                     />
-                    <div className="flex">
+                    <div className="flex items-center w-full">
                       <select
                         value={newHabitCategory}
                         onChange={(e) =>
                           setNewHabitCategory(e.target.value as "zeroWaste" | "energy" | "water" | "transport")
                         }
-                        className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-l-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:outline-none transition-all duration-150"
+                        className="flex-grow px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-l-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:outline-none transition-all duration-150"
                       >
                         <option value="zeroWaste">Zero Waste</option>
                         <option value="energy">Energy</option>
