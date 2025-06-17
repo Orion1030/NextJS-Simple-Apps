@@ -9,12 +9,17 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "framer-motion": "^12.12.1",
+    "@tippyjs/react": "^4.2.6",
+    "date-fns": "^4.1.0",
+    "emoji-picker-react": "^4.12.2",
+    "framer-motion": "^12.18.1",
     "lucide-react": "^0.511.0",
     "motion": "^12.12.2",
     "next": "15.2.5",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-hot-toast": "^2.5.2",
+    "react-use": "^17.6.0",
     "recharts": "^2.15.3",
     "uuid": "^11.1.0"
   },
